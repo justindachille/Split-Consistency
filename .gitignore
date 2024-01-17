@@ -21,4 +21,7 @@ ipython_config.py
 
 *.pyc
 
-./data
+data/
+/data
+/data/
+./data/
