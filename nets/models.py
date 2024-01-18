@@ -285,8 +285,8 @@ class ResNet_50(nn.Module):
         
         return x, x, preds, out1, out2
     
-class AlexNetClient(nn.Module):
-    def __init__(self):
+class AlexNetClient(nn.Module, ):
+    def __init__(self, args, num_classes):
         super(AlexNetClient, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1),
@@ -309,7 +309,7 @@ class AlexNetClient(nn.Module):
         return x
     
 class AlexNetServer(nn.Module):
-    def __init__(self, num_classes=10):
+    def __init__(self, args, num_classes=10):
         super(AlexNetServer, self).__init__()
         self.classifier = nn.Sequential(
             nn.Dropout(),
@@ -325,3 +325,4 @@ class AlexNetServer(nn.Module):
         x = x.view(x.size(0), 256 * 2 * 2)
         x = self.classifier(x)
         return x
+    

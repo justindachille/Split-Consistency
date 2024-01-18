@@ -3,9 +3,12 @@ import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 
+from utils.calculate_acc import calculate_accuracy
+
 def train_client_v1(net_id, nets, train_dataloader, test_dataloader, epochs, lr, args_optimizer, args, round, device, logger):
     net_client, net_server = nets
     net_client = net_client.to(device)
+    net_server = net_server.to(device)
 
     logger.info(f'Training network {net_id}')
     logger.info(f'n_training: {len(train_dataloader)}')
@@ -29,46 +32,39 @@ def train_client_v1(net_id, nets, train_dataloader, test_dataloader, epochs, lr,
             client_fx = client_output.clone().detach().requires_grad_(True)
 
             # Send client_output to server and get gradients
-            dfx = train_server(client_fx, target, args, device, net_server)
+            dfx, loss, acc = train_server(client_fx, target, args, device, net_server)
 
             # Backward pass using gradients from server
             client_output.backward(dfx)
             optimizer_client.step()
 
-            # Collect loss for logging
-            loss = criterion(client_output, target)
-            epoch_loss_collector.append(loss.item())
-
-        # Log epoch loss
+            epoch_loss_collector.append(loss)
         epoch_loss = sum(epoch_loss_collector) / len(epoch_loss_collector)
         logger.info(f'Client: {net_id} Epoch: {epoch} Loss: {epoch_loss}')
 
     net_client.to('cpu')
     logger.info(f' ** Client: {net_id} Training complete **')
     
-    return net_client.state_dict()
+    return net_client.state_dict(), net_server.state_dict()
 
 def train_server(client_output, target, args, device, net_server):
-    # Load server model to device
     net_server = net_server.to(device)
 
-    # Initialize server optimizer, criterion
-    optimizer_server = get_optimizer(net_server, args.lr, args.args_optimizer, args)
+    optimizer_server = get_optimizer(net_server, args.lr, args.optimizer, args)
     criterion = nn.CrossEntropyLoss().to(device)
 
-    # Forward pass on the server model using client_output
     optimizer_server.zero_grad()
     server_output = net_server(client_output)
 
-    # Compute loss
     loss = criterion(server_output, target)
     loss.backward()
 
-    # Extract and return gradients to client
-    dfx_client = client_output.grad.clone().detach()
+    acc = calculate_accuracy(server_output, target)
 
+    dfx_client = client_output.grad.clone().detach()
     optimizer_server.step()
-    return dfx_client
+
+    return dfx_client, loss.item(), acc
 
 def get_optimizer(model, lr, args_optimizer, args):
     if args_optimizer == 'adam':

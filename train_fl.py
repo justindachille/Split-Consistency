@@ -33,7 +33,7 @@ from algs.moon import train_net_moon
 from algs.feduv import train_net_feduv
 from algs.sflv1 import train_client_v1
 
-from utils.calculate_acc import compute_accuracy
+from utils.calculate_acc import compute_accuracy, compute_accuracy_split_model
 
 
 def init_nets(n_parties, args, device, n_classes):
@@ -145,7 +145,7 @@ def main(args):
                                                                  X_train, y_train,
                                                                  X_test, y_test,
                                                                  dataidxs)
-
+            
             train_dl_local_list.append(train_dl_local)
             test_dl_local_list.append(test_dl_local)
 
@@ -176,7 +176,8 @@ def main(args):
         test_dl = data.DataLoader(dataset=test_ds_global, batch_size=args.batch_size, num_workers=4, shuffle=False, 
                                  pin_memory=True, persistent_workers=True
                                  )
-        
+    for i, train_dl in enumerate(train_dl_local_list):
+        print(f'train: {i} len: {len(train_dl)}')
         
     print("len train_dl_global:", len(train_ds_global))
     train_dl=None
@@ -203,9 +204,23 @@ def main(args):
                         param.requires_grad = False
 
     n_epoch = args.epochs
-    global_optimizer = optim.SGD(global_model.parameters(), lr=args.lr, momentum=0.9,
-                          weight_decay=args.reg)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(global_optimizer, n_comm_rounds)
+    if args.alg != 'sflv1':
+        global_optimizer = optim.SGD(global_model.parameters(), lr=args.lr, momentum=0.9,
+                                    weight_decay=args.reg)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(global_optimizer, n_comm_rounds)
+    else:
+        global_client_model, global_server_model = global_model
+        global_client_optimizer = optim.SGD(global_client_model.parameters(), lr=args.lr, momentum=0.9,
+                                            weight_decay=args.reg)
+        global_server_optimizer = optim.SGD(global_server_model.parameters(), lr=args.lr, momentum=0.9,
+                                            weight_decay=args.reg)
+
+        global_optimizer = (global_client_optimizer, global_server_optimizer)
+
+        client_scheduler = optim.lr_scheduler.CosineAnnealingLR(global_client_optimizer, n_comm_rounds)
+        server_scheduler = optim.lr_scheduler.CosineAnnealingLR(global_server_optimizer, n_comm_rounds)
+
+        scheduler = (client_scheduler, server_scheduler)
 
     for round in range(n_comm_rounds):
         print("\n\n************************************")
@@ -213,31 +228,49 @@ def main(args):
         cur_time = time.time()
         logger.info("in comm round:" + str(round))
 
-        cur_lr = scheduler.get_last_lr()[0]    
+        if isinstance(scheduler, tuple):
+            cur_lr = scheduler[0].get_last_lr()[0]
+        else:
+            cur_lr = scheduler.get_last_lr()[0]
         print(f"Current LR: {cur_lr}")
 
         party_list_this_round = party_list_rounds[round]
 
-        global_model.eval()
-        for param in global_model.parameters():
-            param.requires_grad = False
-        global_w = global_model.state_dict()
+        # Check if the global model is a tuple (for sflv1)
+        if args.alg == 'sflv1':
+            global_client_model, _ = global_model
+            global_client_model.eval()
+            for param in global_client_model.parameters():
+                param.requires_grad = False
+            global_client_w = global_client_model.state_dict()
 
-        nets_this_round = {k: nets[k] for k in party_list_this_round}
-        for net in nets_this_round.values():
-            net.load_state_dict(global_w)
+            nets_this_round = {k: nets[k] for k in party_list_this_round}
+            for net_id, (client_net, server_net) in nets_this_round.items():
+                client_net.load_state_dict(global_client_w)
+        else:
+            global_model.eval()
+            for param in global_model.parameters():
+                param.requires_grad = False
+            global_w = global_model.state_dict()
 
+            # Load the global model state dict into each net in this round
+            nets_this_round = {k: nets[k] for k in party_list_this_round}
+            for net in nets_this_round.values():
+                net.load_state_dict(global_w)
         if args.alg == 'Freeze':
             print("Freezing Weights")
             for net in nets_this_round.values():
                 for param in net.fc3.parameters():
                     param.requires_grad = False                
 
-
         avg_acc = 0.0
         acc_list = []
         if global_model:
-            global_model.to(device)
+            if args.alg != 'sflv1':
+                global_model.to(device)
+            else:
+                global_model[0].to(device)
+                global_model[1].to(device)
 
         local_weights = []
 
@@ -251,7 +284,6 @@ def main(args):
             train_dl_local, test_dl_local = train_dl_local_list[net_id], test_dl_local_list[net_id]
 
             if args.alg == 'moon':
-
                 prev_models=[]
 
                 for i in range(len(old_nets_pool)):
@@ -282,57 +314,102 @@ def main(args):
                                   args.optimizer, args, round, device, logger)
 
                 w_locals.append(single_local)
+            
             elif args.alg == 'sflv1':
                 client_server_nets = nets[net_id]
+                client_model_state, server_model_state = train_client_v1(net_id, client_server_nets, train_dl_local, test_dl, n_epoch, cur_lr,
+                                                                        args.optimizer, args, round, device, logger)
                 
-                single_local = train_client_v1(net_id, client_server_nets, train_dl_local, test_dl, n_epoch, cur_lr,
-                                            args.optimizer, args, round, device, logger)
-                
-                # Assuming you want to collect the client model updates
-                w_locals.append(single_local)
+                # Store both client and server model states
+                w_locals.append((client_model_state, server_model_state))
 
-
-
-        for count, net in enumerate(nets_this_round.values()):
-            net.load_state_dict(w_locals[count])               
+        if args.alg != 'sflv1':
+            for count, net in enumerate(nets_this_round.values()):
+                net.load_state_dict(w_locals[count])           # Update the models in nets_this_round with the latest trained models
+        else:
+            for count, (client_net, server_net) in enumerate(nets_this_round.values()):
+                client_net_state, server_net_state = w_locals[count]
+                client_net.load_state_dict(client_net_state)
+                server_net.load_state_dict(server_net_state)
 
         avg_acc /= args.n_parties
         if args.alg == 'local_training':
             logger.info("avg test acc %f" % avg_acc)
             logger.info("std acc %f" % np.std(acc_list))
-        if global_model:
-            global_model.to('cpu')
 
-        print("TIME: ", time.time()-cur_time)
-        scheduler.step()
+        if args.alg == "sflv1":
+            global_client_w = None
+            global_server_w = None
+        else:
+            global_w = None
 
         total_data_points = sum([len(net_dataidx_map[r]) for r in party_list_this_round])
         fed_avg_freqs = [len(net_dataidx_map[r]) / total_data_points for r in party_list_this_round]
 
         layer_exclude_list = []
-        if args.alg=='freeze':
+        if args.alg == 'freeze':
             layer_exclude_list.append("fc3")
-        for net_id, net in enumerate(nets_this_round.values()):
-            net_para = net.state_dict()
-            if net_id == 0:
-                for key in net_para:
-                    if not any(exclude_key in key for exclude_key in layer_exclude_list):
-                        global_w[key] = net_para[key] * fed_avg_freqs[net_id]
+
+        for net_id, nets_tuple in enumerate(nets_this_round.values()):
+            if args.alg == "sflv1":
+                client_net_para, server_net_para = nets_tuple[0].state_dict(), nets_tuple[1].state_dict()
+
+                if global_client_w is None:
+                    global_client_w = {k: v * fed_avg_freqs[net_id] for k, v in client_net_para.items()}
+                else:
+                    for k, v in client_net_para.items():
+                        global_client_w[k] += v * fed_avg_freqs[net_id]
+
+                if global_server_w is None:
+                    global_server_w = {k: v * fed_avg_freqs[net_id] for k, v in server_net_para.items()}
+                else:
+                    for k, v in server_net_para.items():
+                        global_server_w[k] += v * fed_avg_freqs[net_id]
             else:
-                for key in net_para:
-                    if not any(exclude_key in key for exclude_key in layer_exclude_list):
-                        global_w[key] += net_para[key] * fed_avg_freqs[net_id]
+                net_para = nets_tuple.state_dict()
+                if global_w is None:
+                    global_w = {k: v * fed_avg_freqs[net_id] for k, v in net_para.items() if not any(exclude_key in k for exclude_key in layer_exclude_list)}
+                else:
+                    for k, v in net_para.items():
+                        if not any(exclude_key in k for exclude_key in layer_exclude_list):
+                            global_w[k] += v * fed_avg_freqs[net_id]
 
+        if args.alg == "sflv1":
+            global_client_model, global_server_model = global_model
+            global_client_model.load_state_dict(global_client_w)
+            global_server_model.load_state_dict(global_server_w)
+        elif global_model:
+            global_model.load_state_dict(global_w)
 
-        global_model.load_state_dict(global_w)
+        print("TIME: ", time.time() - cur_time)
+        if args.alg == 'sflv1':
+            # Assuming scheduler is a tuple of (client_scheduler, server_scheduler)
+            client_scheduler, server_scheduler = scheduler
+            client_scheduler.step()
+            server_scheduler.step()
+        else:
+            scheduler.step()
 
         logger.info('global n_training: %d' % len(train_dl_global))
         logger.info('global n_test: %d' % len(test_dl))
-        global_model.to(device)
         
-        train_acc, train_loss = compute_accuracy(global_model, train_dl_global, device=device)
-        test_acc, _ = compute_accuracy(global_model, test_dl, get_confusion_matrix=False, device=device)
-        global_model.to('cpu')
+        
+        if args.alg == 'sflv1':
+            global_model[0].to(device)
+            global_model[1].to(device)
+            global_client_model, global_server_model = global_model  # Unpack the tuple of client and server models
+
+            # Compute accuracy for split models
+            train_acc, train_loss = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
+            test_acc, _ = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
+            global_model[0].to('cpu')
+            global_model[1].to('cpu')
+        else:
+            global_model.to(device)
+            # Compute accuracy for a single model
+            train_acc, train_loss = compute_accuracy(global_model, train_dl_global, device=device)
+            test_acc, _ = compute_accuracy(global_model, test_dl, get_confusion_matrix=False, device=device)
+            global_model.to('cpu')
         logger.info('>> Global Model Train accuracy: %f' % train_acc)
         logger.info('>> Global Model Test accuracy: %f' % test_acc)
         logger.info('>> Global Model Train loss: %f' % train_loss)
