@@ -9,6 +9,7 @@ import os
 import copy
 import datetime
 import random
+from importlib import reload
 
 import argparse
 
@@ -19,42 +20,55 @@ import torch.nn.functional as F
 import numpy as np
 import copy
 
-from utils.dataloader import partition_data
-from utils.dataloader import DatasetSplit, get_dataloader
+from utils.dataloader import DatasetSplit, partition_data, get_dataloader, FedAvg
 
 from nets.models import SimpleCNN
 from nets.models import ResNet_18
 from nets.models import ResNet_50
-from nets.models import AlexNetClient, AlexNetServer
+from nets.models import AlexNetClient, AlexNetServer, AlexNet
 
 from algs.fedavg import train_net_fedavg
 from algs.fedprox import train_net_fedprox
 from algs.moon import train_net_moon
 from algs.feduv import train_net_feduv
 from algs.sflv1 import train_client_v1
+from algs.sflv2 import train_client_v2
 
 from utils.calculate_acc import compute_accuracy, compute_accuracy_split_model
 
 
 def init_nets(n_parties, args, device, n_classes):
     nets = {net_i: (None, None) for net_i in range(n_parties)}
+    global_server_model = None
+    if args.alg == 'sflv2':
+        if args.model == 'alexnet':
+            global_server_model = AlexNetClient(args, n_classes)
 
     for net_i in range(n_parties):
+        if args.model == 'alexnet':
+            if args.alg == 'sflv1':
+                client_net = AlexNetClient(args, n_classes)
+                server_net = AlexNetServer(args, n_classes)
+            elif args.alg == 'sflv2':
+                client_net = AlexNetClient(args, n_classes)
+                server_net = None
+            else:
+                net = AlexNet(args, n_classes)
+        elif args.model == 'resnet-50':
+            net = ResNet_50(args, n_classes)
+        elif args.model == 'resnet-18':
+            net = ResNet_18(args, n_classes)
+        elif args.model == 'simple-cnn':
+            net = SimpleCNN(args.out_dim, n_classes, args.simp_width)
+
         if args.alg == 'sflv1':
-            client_net = AlexNetClient(args, n_classes)
-            server_net = AlexNetServer(args, n_classes)
             nets[net_i] = (client_net.to(device), server_net.to(device))
+        elif args.alg == 'sflv2':
+            nets[net_i] = (client_net.to(device), None)
         else:
-            # Initialize regular model
-            if args.model == 'resnet-50':
-                net = ResNet_50(args, n_classes)
-            elif args.model == 'resnet-18':
-                net = ResNet_18(args, n_classes)
-            elif args.model == 'simple-cnn':
-                net = SimpleCNN(args.out_dim, n_classes, args.simp_width)
             nets[net_i] = net.to(device)
 
-    if args.alg == 'sflv1':
+    if args.alg == 'sflv1' or args.alg == 'sflv2':
         model_meta_data = []
         layer_type = []
         for (k, v) in nets[0][0].state_dict().items():
@@ -67,7 +81,7 @@ def init_nets(n_parties, args, device, n_classes):
             model_meta_data.append(v.shape)
             layer_type.append(k)
 
-    return nets, model_meta_data, layer_type
+    return nets, model_meta_data, layer_type, global_server_model
 
 def main(args):
     #0. Set seeds
@@ -93,11 +107,23 @@ def main(args):
     print(f"Algorithm: {args.alg}")
         
     #2. Init logs
+    hparams = {
+        'alg': args.alg,
+        'partition': args.partition,
+        'lr': args.lr,
+        'epochs': args.epochs,
+        'num_users': args.n_parties,
+        # 'split_layer': args.split_layer,
+        'beta': args.alpha,
+        'batch_size': args.batch_size,
+        'opt': args.optimizer,
+        'dataset': args.dataset,
+    }
+    hparam_str = "_".join(f"{k}={v}" for k, v in hparams.items())
     if args.log_file_name is None:
-        args.log_file_name = 'experiment_log-%s' % (datetime.datetime.now().strftime("%Y-%m-%d-%H%M-%S"))
+        args.log_file_name = f'experiment_log-{hparam_str}_{datetime.datetime.now().strftime("%Y-%m-%d-%H%M-%S")}'
     log_path = args.log_file_name + '.log'
 
-    from importlib import reload
     reload(logging)
 
     logging.basicConfig(
@@ -108,6 +134,9 @@ def main(args):
     logger.setLevel(logging.INFO)
     logger.info(device)
 
+    args_string = json.dumps(vars(args), indent=4)
+    print(args_string)
+    logging.info("Command Line Arguments: \n%s", args_string)
     #3. Get data
     n_party_per_round = int(args.n_parties * args.sample_fraction)
     party_list = [i for i in range(args.n_parties)]
@@ -119,7 +148,37 @@ def main(args):
         for i in range(args.comm_round):
             party_list_rounds.append(party_list)
             
-    if args.dataset == 'stl10'or args.dataset == 'cifar10' or args.dataset == 'cifar100' or args.dataset == 'tinyimagenet':
+    if args.dataset == 'ham10000':
+        def print_aggregated_labels(dataloader, client_name):
+            label_counts = {}
+            for batch in dataloader:
+                labels = batch[1]
+                for label in labels:
+                    label = label.item()  # Convert to Python scalar
+                    if label in label_counts:
+                        label_counts[label] += 1
+                    else:
+                        label_counts[label] = 1
+
+            print(f"Aggregated label counts for {client_name}: {label_counts}")
+        train_dl_global, test_dl, client1_loader, client2_loader, net_dataidx_map = partition_data(
+            args,
+            args.dataset, args.datadir, args.logdir, args.partition, args.n_parties, beta=args.alpha, 
+           logger=logger
+        )
+        test_ds_global = []
+        train_ds_global = []
+        train_dl_local_list, test_dl_local_list = [],[]
+        print_aggregated_labels(client1_loader, 'client1')
+        print_aggregated_labels(client2_loader, 'client2')
+        train_dl_local_list.append(client1_loader)
+        train_dl_local_list.append(client2_loader)
+
+        test_dl_local_list.append(test_dl)
+        test_dl_local_list.append(test_dl)
+        n_classes = 7
+
+    elif args.dataset == 'stl10'or args.dataset == 'cifar10' or args.dataset == 'cifar100' or args.dataset == 'tinyimagenet':
         X_train, y_train, X_test, y_test, net_dataidx_map, traindata_cls_counts = partition_data(
             args,
             args.dataset, args.datadir, args.logdir, args.partition, args.n_parties, beta=args.alpha, 
@@ -154,7 +213,7 @@ def main(args):
                                                                args.batch_size, 
                                                                args.batch_size,
                                                                X_train, y_train,
-                                                               X_test, y_test)    
+                                                               X_test, y_test)
         
     else:
         all_train_ds, train_ds_global, train_dl_global, test_ds_global, test_dl = load_feature_shift(args)
@@ -185,11 +244,16 @@ def main(args):
 
     print("len test_dl_global:", data_size)
     print(f"n_classes: {n_classes}")
-        
-    nets, local_model_meta_data, layer_type = init_nets(args.n_parties, args, device, n_classes)
+    
+    if args.alg != 'sflv2':
+        nets, local_model_meta_data, layer_type, _ = init_nets(args.n_parties, args, device, n_classes)
+        global_models, global_model_meta_data, global_layer_type, _ = init_nets(1, args, device, n_classes)
+        global_model = global_models[0]
+    else:
+        nets, local_model_meta_data, layer_type, global_server_model = init_nets(args.n_parties, args, device, n_classes)
+        global_models, global_model_meta_data, global_layer_type, _ = init_nets(1, args, device, n_classes)
+        global_model = global_models[0]
 
-    global_models, global_model_meta_data, global_layer_type = init_nets(1, args, device, n_classes)
-    global_model = global_models[0]
     n_comm_rounds = args.comm_round
 
     if args.alg == 'moon':
@@ -204,12 +268,12 @@ def main(args):
                         param.requires_grad = False
 
     n_epoch = args.epochs
-    if args.alg != 'sflv1':
-        global_optimizer = optim.SGD(global_model.parameters(), lr=args.lr, momentum=0.9,
-                                    weight_decay=args.reg)
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(global_optimizer, n_comm_rounds)
-    else:
+    if args.alg == 'sflv1':
         global_client_model, global_server_model = global_model
+    elif args.alg == 'sflv2':
+        global_client_model, _ = global_model
+
+    if args.alg == 'sflv1' or args.alg == 'sflv2':
         global_client_optimizer = optim.SGD(global_client_model.parameters(), lr=args.lr, momentum=0.9,
                                             weight_decay=args.reg)
         global_server_optimizer = optim.SGD(global_server_model.parameters(), lr=args.lr, momentum=0.9,
@@ -221,6 +285,10 @@ def main(args):
         server_scheduler = optim.lr_scheduler.CosineAnnealingLR(global_server_optimizer, n_comm_rounds)
 
         scheduler = (client_scheduler, server_scheduler)
+    else:
+        global_optimizer = optim.SGD(global_model.parameters(), lr=args.lr, momentum=0.9,
+                                    weight_decay=args.reg)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(global_optimizer, n_comm_rounds)
 
     for round in range(n_comm_rounds):
         print("\n\n************************************")
@@ -261,12 +329,12 @@ def main(args):
             print("Freezing Weights")
             for net in nets_this_round.values():
                 for param in net.fc3.parameters():
-                    param.requires_grad = False                
+                    param.requires_grad = False
 
         avg_acc = 0.0
         acc_list = []
         if global_model:
-            if args.alg != 'sflv1':
+            if args.alg != 'sflv1' or args.alg != 'sflv2':
                 global_model.to(device)
             else:
                 global_model[0].to(device)
@@ -276,16 +344,16 @@ def main(args):
 
         procs=[]
         w_locals = []
-        c_locals = []   #Only used for scaffold
-        c_deltas = []   #Only used for scaffold
+        c_locals = [] # Only used for scaffold
+        c_deltas = [] # Only used for scaffold
+        w_locals_client = [] # Only used for split
+        w_locals_server = [] # Only used for split
         for net_id, net in nets_this_round.items():
-
-            logger.info("Training network %s. n_training: %d" % (str(net_id), len(dataidxs)))
             train_dl_local, test_dl_local = train_dl_local_list[net_id], test_dl_local_list[net_id]
+            logger.info(f"Training network {(str(net_id))} n_training: {len(train_dl_local.dataset)}")
 
             if args.alg == 'moon':
                 prev_models=[]
-
                 for i in range(len(old_nets_pool)):
                     prev_models.append(old_nets_pool[i][net_id])
 
@@ -317,20 +385,18 @@ def main(args):
             
             elif args.alg == 'sflv1':
                 client_server_nets = nets[net_id]
-                client_model_state, server_model_state = train_client_v1(net_id, client_server_nets, train_dl_local, test_dl, n_epoch, cur_lr,
+                client_model_state, server_model_state = train_client_v1(net_id, client_server_nets, train_dl_local, n_epoch, cur_lr,
                                                                         args.optimizer, args, round, device, logger)
                 
-                # Store both client and server model states
-                w_locals.append((client_model_state, server_model_state))
-
-        if args.alg != 'sflv1':
-            for count, net in enumerate(nets_this_round.values()):
-                net.load_state_dict(w_locals[count])           # Update the models in nets_this_round with the latest trained models
-        else:
-            for count, (client_net, server_net) in enumerate(nets_this_round.values()):
-                client_net_state, server_net_state = w_locals[count]
-                client_net.load_state_dict(client_net_state)
-                server_net.load_state_dict(server_net_state)
+                w_locals_client.append(client_model_state)
+                w_locals_server.append(server_model_state)
+            elif args.alg == 'sflv2':
+                client_server_nets = nets[net_id]
+                client_model_state = train_client_v2(net_id, client_server_nets, train_dl_local, n_epoch, cur_lr,
+                                                    args.optimizer, global_server_optimizer, args, round, 
+                                                    global_server_model, device, logger)
+                
+                w_locals_client.append(client_model_state)
 
         avg_acc /= args.n_parties
         if args.alg == 'local_training':
@@ -350,63 +416,36 @@ def main(args):
         if args.alg == 'freeze':
             layer_exclude_list.append("fc3")
 
-        for net_id, nets_tuple in enumerate(nets_this_round.values()):
-            if args.alg == "sflv1":
-                client_net_para, server_net_para = nets_tuple[0].state_dict(), nets_tuple[1].state_dict()
-
-                if global_client_w is None:
-                    global_client_w = {k: v * fed_avg_freqs[net_id] for k, v in client_net_para.items()}
-                else:
-                    for k, v in client_net_para.items():
-                        global_client_w[k] += v * fed_avg_freqs[net_id]
-
-                if global_server_w is None:
-                    global_server_w = {k: v * fed_avg_freqs[net_id] for k, v in server_net_para.items()}
-                else:
-                    for k, v in server_net_para.items():
-                        global_server_w[k] += v * fed_avg_freqs[net_id]
-            else:
-                net_para = nets_tuple.state_dict()
-                if global_w is None:
-                    global_w = {k: v * fed_avg_freqs[net_id] for k, v in net_para.items() if not any(exclude_key in k for exclude_key in layer_exclude_list)}
-                else:
-                    for k, v in net_para.items():
-                        if not any(exclude_key in k for exclude_key in layer_exclude_list):
-                            global_w[k] += v * fed_avg_freqs[net_id]
-
-        if args.alg == "sflv1":
-            global_client_model, global_server_model = global_model
-            global_client_model.load_state_dict(global_client_w)
-            global_server_model.load_state_dict(global_server_w)
-        elif global_model:
-            global_model.load_state_dict(global_w)
-
         print("TIME: ", time.time() - cur_time)
-        if args.alg == 'sflv1':
-            # Assuming scheduler is a tuple of (client_scheduler, server_scheduler)
-            client_scheduler, server_scheduler = scheduler
-            client_scheduler.step()
-            server_scheduler.step()
-        else:
-            scheduler.step()
 
         logger.info('global n_training: %d' % len(train_dl_global))
         logger.info('global n_test: %d' % len(test_dl))
-        
-        
-        if args.alg == 'sflv1':
+
+        if args.alg == "sflv1":
+            w_glob_client = FedAvg(w_locals_client)
+            w_glob_server = FedAvg(w_locals_server)
+
+            global_client_model, global_server_model = global_model
+            global_client_model.load_state_dict(w_glob_client)
+            global_server_model.load_state_dict(w_glob_server)
+
+            client_scheduler, server_scheduler = scheduler
+            client_scheduler.step()
+            server_scheduler.step()
+
             global_model[0].to(device)
             global_model[1].to(device)
-            global_client_model, global_server_model = global_model  # Unpack the tuple of client and server models
+            global_client_model, global_server_model = global_model
 
-            # Compute accuracy for split models
             train_acc, train_loss = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
             test_acc, _ = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
             global_model[0].to('cpu')
             global_model[1].to('cpu')
         else:
+            w_glob_model = FedAvg(w_locals)
+            global_model.load_state_dict(w_glob_model)
+            scheduler.step()
             global_model.to(device)
-            # Compute accuracy for a single model
             train_acc, train_loss = compute_accuracy(global_model, train_dl_global, device=device)
             test_acc, _ = compute_accuracy(global_model, test_dl, get_confusion_matrix=False, device=device)
             global_model.to('cpu')
@@ -436,12 +475,10 @@ def main(args):
                     old_nets_pool[i] = old_nets_pool[i+1]
                 old_nets_pool[args.model_buffer_size - 1] = old_nets
 
-
         print("TIME: ", time.time()-cur_time)
         print("************************************\n\n")
         
 if __name__ == "__main__":
-    
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=10, help='number of local epochs')
     parser.add_argument('--comm_round', type=int, default=100, help='number of maximum communication rounds')

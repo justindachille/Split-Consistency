@@ -1,11 +1,19 @@
 import torch.utils.data as data
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, Subset
 
 from torchvision.datasets import STL10, CIFAR10, CIFAR100, ImageFolder, DatasetFolder, utils
 import torchvision.transforms as transforms
 import numpy as np
 import torch
+import torch.nn.functional as F
+from torch.autograd import Variable
 
+from glob import glob
+import os
+from PIL import Image
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import copy
 
 def record_net_data_stats(y_train, net_dataidx_map, logdir, logger):
     net_cls_counts = {}
@@ -56,7 +64,7 @@ def load_cifar10_data(args, datadir):
     X_test, y_test = cifar10_test_ds.data, cifar10_test_ds.targets
 
     X_train, y_train = np.array(X_train), np.array(y_train)
-    X_test, y_test = np.array(X_train), np.array(y_train)
+    X_test, y_test = np.array(X_test), np.array(y_test)
 
     return (X_train, y_train, X_test, y_test)
 
@@ -117,7 +125,6 @@ def load_feature_shift(args):
 
 
 def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.4, logger=None):
-    
     if dataset == 'cifar10':
         X_train, y_train, X_test, y_test = load_cifar10_data(args, datadir)
     elif dataset == 'stl10':
@@ -126,6 +133,8 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
         X_train, y_train, X_test, y_test = load_cifar100_data(args, datadir)
     elif dataset == 'tinyimagenet':
         X_train, y_train, X_test, y_test = load_tinyimagenet_data(args, datadir)
+    elif dataset == 'ham10000':
+        return Ham10000().preprocess_data()
 
     n_train = y_train.shape[0]
 
@@ -168,6 +177,156 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
     traindata_cls_counts = record_net_data_stats(y_train, net_dataidx_map, logdir, logger)
     
     return (X_train, y_train, X_test, y_test, net_dataidx_map, traindata_cls_counts)
+
+class SkinData(Dataset):
+    def __init__(self, df, transform = None):       
+        self.df = df
+        self.transform = transform
+        
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, index):
+        X = Image.open(self.df['path'][index]).resize((64, 64))
+        y = torch.tensor(int(self.df['target'][index]))
+        
+        if self.transform:
+            X = self.transform(X)
+        
+        return X, y
+
+def dataset_non_iid_both(dataset_train, dataset_test, num_users, beta=0.5, subsample=[5000, 8000]):
+    dict_users_train, dirichlet_dist = dataset_non_iid(dataset_train, num_users, beta=beta, subsample_sizes=subsample)
+    dict_users_test, _ = dataset_non_iid(dataset_test, num_users, beta=beta, dirichlet_dist_to_use=dirichlet_dist, subsample_sizes=subsample)
+    return dict_users_train, dict_users_test
+
+def dataset_non_iid(dataset, num_users, beta=0.5, dirichlet_dist_to_use=None, subsample_sizes=[5000, 8000]):
+    print('in dataset non iid')
+    num_classes = len(set([label for _, label in dataset]))
+    dict_users = {}
+
+    if dirichlet_dist_to_use is None:
+        dirichlet_dist = np.random.dirichlet([beta] * num_users, num_classes)
+        dirichlet_dist[np.isinf(dirichlet_dist)] = 1.0
+        dirichlet_dist = np.nan_to_num(dirichlet_dist, nan=0.0)
+        dirichlet_dist /= dirichlet_dist.sum(axis=1, keepdims=True)
+    else:
+        dirichlet_dist = dirichlet_dist_to_use
+
+    class_indices = [[] for _ in range(num_classes)]
+
+    for idx, (_, label) in enumerate(dataset):
+        class_indices[label].append(idx)
+
+    for j in range(num_users):
+        dict_users[j] = []
+
+    for c in range(num_classes):
+        np.random.shuffle(class_indices[c])
+        num_total = len(class_indices[c])
+        
+        end_idx = 0
+        for j in range(num_users):
+            start_idx = end_idx
+            end_idx += int(np.ceil(dirichlet_dist[c, j] * num_total))
+            indices_to_add = class_indices[c][start_idx:end_idx]
+            dict_users[j].extend(indices_to_add)
+
+    # Now, randomly subsample each client's data while maintaining the distribution
+    for j in range(num_users):
+        np.random.shuffle(dict_users[j])
+        subsample_size = subsample_sizes[j % len(subsample_sizes)]
+        dict_users[j] = set(dict_users[j][:subsample_size])
+
+    return dict_users, dirichlet_dist
+
+class Ham10000:
+    def __init__(self):
+        self.df, self.df_test = self.load_data()
+        self.print_data_info()
+        self.train = self.df
+        self.dataset_train, self.dataset_test, _, _, _ = self.preprocess_data()   
+
+    def load_data(self):
+        df = pd.read_csv('data/HAM10000_metadata.csv')
+        df_test = pd.read_csv('data/ISIC2018_Task3_Test_GroundTruth.csv')
+
+        lesion_type = {
+            'nv': 'Melanocytic nevi',
+            'mel': 'Melanoma',
+            'bkl': 'Benign keratosis-like lesions ',
+            'bcc': 'Basal cell carcinoma',
+            'akiec': 'Actinic keratoses',
+            'vasc': 'Vascular lesions',
+            'df': 'Dermatofibroma'
+        }
+
+        def add_images(df):
+            imageid_path = {os.path.splitext(os.path.basename(x))[0]: x for x in glob(os.path.join("data", '*', '*.jpg'))}
+            df['path'] = df['image_id'].map(imageid_path.get)
+            df['cell_type'] = df['dx'].map(lesion_type.get)
+            df['target'] = pd.Categorical(df['cell_type']).codes
+            return df
+        
+        df = add_images(df)
+        df_test = add_images(df_test)
+
+        return df, df_test
+
+    def print_data_info(self):
+        print(self.df['cell_type'].value_counts())
+        print(self.df['target'].value_counts())
+
+    def preprocess_data(self):
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+
+        train_transforms = transforms.Compose([transforms.RandomHorizontalFlip(), 
+                                               transforms.RandomVerticalFlip(),
+                                               transforms.Pad(3),
+                                               transforms.RandomRotation(10),
+                                               transforms.CenterCrop(64),
+                                               transforms.ToTensor(), 
+                                               transforms.Normalize(mean=mean, std=std)])
+
+        test_transforms = transforms.Compose([
+                            transforms.Pad(3),
+                            transforms.CenterCrop(64),
+                            transforms.ToTensor(),
+                            transforms.Normalize(mean=mean, std=std)])
+        
+        dataset_train = SkinData(self.train, transform=train_transforms)
+        dataset_test = SkinData(self.df_test, transform=test_transforms)
+
+        def create_client_dataloaders(dataset, batch_size=32):
+            # Determine the number of samples for each client
+            num_samples_client1 = np.random.choice([4000, 6000])
+            num_samples_client2 = np.random.choice([4000, 6000])
+
+            # Generate random indices for sampling
+            indices = torch.randperm(len(dataset)).tolist()
+
+            # Split indices for each client
+            client1_indices = indices[:num_samples_client1]
+            client2_indices = indices[num_samples_client1:num_samples_client1 + num_samples_client2]
+
+            # Create subsets for each client
+            client1_dataset = Subset(dataset, client1_indices)
+            client2_dataset = Subset(dataset, client2_indices)
+
+            # Create dataloaders for each client
+            client1_loader = DataLoader(client1_dataset, batch_size=batch_size, shuffle=True)
+            client2_loader = DataLoader(client2_dataset, batch_size=batch_size, shuffle=True)
+
+            return client1_loader, client1_indices, client2_loader, client2_indices
+        client1_loader, client1_indices, client2_loader, client2_indices = create_client_dataloaders(dataset_train)
+
+        net_dataidx_map = {
+            0: client1_indices,
+            1: client2_indices
+        }
+
+        return dataset_train, dataset_test, client1_loader, client2_loader, net_dataidx_map
 
 
 class ImageFolder_custom(DatasetFolder):
@@ -249,8 +408,6 @@ class DatasetSplit(Dataset):
         return image, label
     
     
-from torch.autograd import Variable
-import torch.nn.functional as F
 sharing_strategy = "file_system"
 torch.multiprocessing.set_sharing_strategy(sharing_strategy)     
 
@@ -374,3 +531,11 @@ def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=No
         
 
     return train_dl, test_dl, train_ds, test_ds    
+
+def FedAvg(w):
+    w_avg = copy.deepcopy(w[0])
+    for k in w_avg.keys():
+        for i in range(1, len(w)):
+            w_avg[k] += w[i][k]
+        w_avg[k] = torch.div(w_avg[k], len(w))
+    return w_avg

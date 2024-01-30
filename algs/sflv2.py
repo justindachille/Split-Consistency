@@ -5,32 +5,29 @@ import torch.nn.functional as F
 
 from utils.calculate_acc import calculate_accuracy
 
-def train_client_v1(net_id, nets, train_dataloader, epochs, lr, args_optimizer, args, round, device, logger):
-    net_client, net_server = nets
+def train_client_v2(net_id, net_client, train_dataloader, epochs, lr, args_optimizer, optimizer_server, args, round, shared_server_model, device, logger):
     net_client = net_client.to(device)
-    net_server = net_server.to(device)
-
-    optimizer_server = get_optimizer(net_server, args.lr, args_optimizer, args)
-
-    logger.info(f'Training network {net_id}')
-    logger.info(f'n_training: {len(train_dataloader)}')
+    shared_server_model = shared_server_model.to(device)
 
     # Initialize client optimizer
     optimizer_client = get_optimizer(net_client, lr, args_optimizer, args)
+
+    logger.info(f'Training network {net_id}')
+    logger.info(f'n_training: {len(train_dataloader)}')
 
     for epoch in range(epochs):
         epoch_loss_collector = []
         for batch_idx, (x, target) in enumerate(train_dataloader):
             x, target = x.to(device), target.to(device)
-            
+
             optimizer_client.zero_grad()
 
             # Forward pass on client model
             client_output = net_client(x)
             client_fx = client_output.clone().detach().requires_grad_(True)
 
-            # Send client_output to server and get gradients
-            dfx, loss, acc = train_server(client_fx, target, args, device, net_server, optimizer_server)
+            # Send client_output to shared server and get gradients
+            dfx, loss, acc = train_server(client_fx, target, args, device, shared_server_model, optimizer_server)
 
             # Backward pass using gradients from server
             client_output.backward(dfx)
@@ -42,16 +39,16 @@ def train_client_v1(net_id, nets, train_dataloader, epochs, lr, args_optimizer, 
 
     net_client.to('cpu')
     logger.info(f' ** Client: {net_id} Training complete **')
-    
-    return net_client.state_dict(), net_server.state_dict()
 
-def train_server(client_output, target, args, device, net_server, optimizer_server):
-    net_server = net_server.to(device)
+    return net_client.state_dict()
+
+def train_server(client_output, target, args, device, shared_server_model, optimizer_server):
+    shared_server_model = shared_server_model.to(device)
 
     criterion = nn.CrossEntropyLoss().to(device)
 
     optimizer_server.zero_grad()
-    server_output = net_server(client_output)
+    server_output = shared_server_model(client_output)
 
     loss = criterion(server_output, target)
     loss.backward()
@@ -59,7 +56,6 @@ def train_server(client_output, target, args, device, net_server, optimizer_serv
     acc = calculate_accuracy(server_output, target)
 
     dfx_client = client_output.grad.clone().detach()
-    optimizer_server.step()
 
     return dfx_client, loss.item(), acc
 
