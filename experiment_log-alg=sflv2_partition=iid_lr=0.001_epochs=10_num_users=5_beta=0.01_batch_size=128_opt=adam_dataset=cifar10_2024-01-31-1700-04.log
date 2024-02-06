@@ -1,0 +1,106 @@
+01-31 17:00 INFO     cuda
+01-31 17:00 INFO     Command Line Arguments: 
+{
+    "epochs": 10,
+    "comm_round": 100,
+    "sample_fraction": 1.0,
+    "alpha": 0.01,
+    "dataset": "cifar10",
+    "datadir": "../data/",
+    "partition": "iid",
+    "alg": "sflv2",
+    "model": "alexnet",
+    "n_parties": 5,
+    "lr": 0.001,
+    "mu": 1,
+    "std_coeff": 2.5,
+    "unif_coeff": 0.5,
+    "batch_size": 128,
+    "load_first_net": 1,
+    "pool_option": "FIFO",
+    "model_buffer_size": 1,
+    "optimizer": "adam",
+    "simp_width": 1,
+    "out_dim": 256,
+    "reg": 1e-05,
+    "temperature": 0.5,
+    "logdir": "./",
+    "log_file_name": "experiment_log-alg=sflv2_partition=iid_lr=0.001_epochs=10_num_users=5_beta=0.01_batch_size=128_opt=adam_dataset=cifar10_2024-01-31-1700-04",
+    "seed": 42,
+    "device": "cuda",
+    "multiprocessing": 0
+}
+01-31 17:00 INFO     Data statistics: {0: {0: 973, 1: 979, 2: 1030, 3: 1023, 4: 933, 5: 1015, 6: 996, 7: 994, 8: 1017, 9: 1040}, 1: {0: 1000, 1: 1000, 2: 979, 3: 1018, 4: 1011, 5: 1018, 6: 944, 7: 999, 8: 1028, 9: 1003}, 2: {0: 981, 1: 1048, 2: 1007, 3: 991, 4: 999, 5: 998, 6: 1026, 7: 986, 8: 968, 9: 996}, 3: {0: 1036, 1: 984, 2: 991, 3: 1001, 4: 1046, 5: 965, 6: 1001, 7: 975, 8: 983, 9: 1018}, 4: {0: 1010, 1: 989, 2: 993, 3: 967, 4: 1011, 5: 1004, 6: 1033, 7: 1046, 8: 1004, 9: 943}}
+01-31 17:00 INFO     in comm round:0
+01-31 17:00 INFO     Training network 0 n_training: 10000
+01-31 17:00 INFO     Training network 0
+01-31 17:00 INFO     n_training: 78
+01-31 17:00 INFO     Client: 0 Epoch: 0 Loss: 2.2036744264455943
+01-31 17:00 INFO     Client: 0 Epoch: 1 Loss: 1.997927305025932
+01-31 17:00 INFO     Client: 0 Epoch: 2 Loss: 1.8729527516242785
+01-31 17:00 INFO     Client: 0 Epoch: 3 Loss: 1.748807708422343
+01-31 17:00 INFO     Client: 0 Epoch: 4 Loss: 1.658154240021339
+01-31 17:00 INFO     Client: 0 Epoch: 5 Loss: 1.5681188228802803
+01-31 17:00 INFO     Client: 0 Epoch: 6 Loss: 1.4652820871426508
+01-31 17:00 INFO     Client: 0 Epoch: 7 Loss: 1.4031575276301458
+01-31 17:00 INFO     Client: 0 Epoch: 8 Loss: 1.3310498152023706
+01-31 17:00 INFO     Client: 0 Epoch: 9 Loss: 1.2524216580085266
+01-31 17:00 INFO      ** Client: 0 Training complete **
+01-31 17:00 INFO     Training network 1 n_training: 10000
+01-31 17:00 INFO     Training network 1
+01-31 17:00 INFO     n_training: 78
+01-31 17:01 INFO     Client: 1 Epoch: 0 Loss: 2.2284161983392177
+01-31 17:01 INFO     Client: 1 Epoch: 1 Loss: 2.038309169121278
+01-31 17:01 INFO     Client: 1 Epoch: 2 Loss: 1.8768389714069855
+01-31 17:01 INFO     Client: 1 Epoch: 3 Loss: 1.7403011811085236
+01-31 17:01 INFO     Client: 1 Epoch: 4 Loss: 1.6452571168923988
+01-31 17:01 INFO     Client: 1 Epoch: 5 Loss: 1.5527021839068487
+01-31 17:01 INFO     Client: 1 Epoch: 6 Loss: 1.4736986695191798
+01-31 17:01 INFO     Client: 1 Epoch: 7 Loss: 1.3970897182440147
+01-31 17:01 INFO     Client: 1 Epoch: 8 Loss: 1.3341931119943276
+01-31 17:01 INFO     Client: 1 Epoch: 9 Loss: 1.290350805490445
+01-31 17:01 INFO      ** Client: 1 Training complete **
+01-31 17:01 INFO     Training network 2 n_training: 10000
+01-31 17:01 INFO     Training network 2
+01-31 17:01 INFO     n_training: 78
+01-31 17:01 INFO     Client: 2 Epoch: 0 Loss: 2.1908424145136123
+01-31 17:01 INFO     Client: 2 Epoch: 1 Loss: 1.9525823700122344
+01-31 17:01 INFO     Client: 2 Epoch: 2 Loss: 1.8052631952823737
+01-31 17:01 INFO     Client: 2 Epoch: 3 Loss: 1.6861464518767137
+01-31 17:01 INFO     Client: 2 Epoch: 4 Loss: 1.5873567706499345
+01-31 17:01 INFO     Client: 2 Epoch: 5 Loss: 1.5052232772876055
+01-31 17:01 INFO     Client: 2 Epoch: 6 Loss: 1.4147620797157288
+01-31 17:01 INFO     Client: 2 Epoch: 7 Loss: 1.3433317358677204
+01-31 17:01 INFO     Client: 2 Epoch: 8 Loss: 1.2496414413818946
+01-31 17:01 INFO     Client: 2 Epoch: 9 Loss: 1.1769052545229595
+01-31 17:01 INFO      ** Client: 2 Training complete **
+01-31 17:01 INFO     Training network 3 n_training: 10000
+01-31 17:01 INFO     Training network 3
+01-31 17:01 INFO     n_training: 78
+01-31 17:02 INFO     Client: 3 Epoch: 0 Loss: 2.2344227051123595
+01-31 17:02 INFO     Client: 3 Epoch: 1 Loss: 2.0743713531738672
+01-31 17:02 INFO     Client: 3 Epoch: 2 Loss: 1.8898807580654438
+01-31 17:02 INFO     Client: 3 Epoch: 3 Loss: 1.7601510316897662
+01-31 17:02 INFO     Client: 3 Epoch: 4 Loss: 1.6506204589819298
+01-31 17:02 INFO     Client: 3 Epoch: 5 Loss: 1.5619959846521034
+01-31 17:02 INFO     Client: 3 Epoch: 6 Loss: 1.469558399457198
+01-31 17:02 INFO     Client: 3 Epoch: 7 Loss: 1.4042664475930042
+01-31 17:02 INFO     Client: 3 Epoch: 8 Loss: 1.3315819226778471
+01-31 17:02 INFO     Client: 3 Epoch: 9 Loss: 1.2635061580401201
+01-31 17:02 INFO      ** Client: 3 Training complete **
+01-31 17:02 INFO     Training network 4 n_training: 10000
+01-31 17:02 INFO     Training network 4
+01-31 17:02 INFO     n_training: 78
+01-31 17:02 INFO     Client: 4 Epoch: 0 Loss: 2.19606460363437
+01-31 17:02 INFO     Client: 4 Epoch: 1 Loss: 1.9843742709893446
+01-31 17:02 INFO     Client: 4 Epoch: 2 Loss: 1.8336723905343275
+01-31 17:02 INFO     Client: 4 Epoch: 3 Loss: 1.7319461550468054
+01-31 17:02 INFO     Client: 4 Epoch: 4 Loss: 1.6257011569463289
+01-31 17:02 INFO     Client: 4 Epoch: 5 Loss: 1.542412200035193
+01-31 17:02 INFO     Client: 4 Epoch: 6 Loss: 1.456473090709784
+01-31 17:02 INFO     Client: 4 Epoch: 7 Loss: 1.3933583360451918
+01-31 17:02 INFO     Client: 4 Epoch: 8 Loss: 1.3191706232535534
+01-31 17:02 INFO     Client: 4 Epoch: 9 Loss: 1.2600571329777057
+01-31 17:02 INFO      ** Client: 4 Training complete **
+01-31 17:02 INFO     global n_training: 390
+01-31 17:02 INFO     global n_test: 79

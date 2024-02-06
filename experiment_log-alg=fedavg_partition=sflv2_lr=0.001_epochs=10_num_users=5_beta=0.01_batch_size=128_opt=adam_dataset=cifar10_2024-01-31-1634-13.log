@@ -1,0 +1,32 @@
+01-31 16:34 INFO     cuda
+01-31 16:34 INFO     Command Line Arguments: 
+{
+    "epochs": 10,
+    "comm_round": 100,
+    "sample_fraction": 1.0,
+    "alpha": 0.01,
+    "dataset": "cifar10",
+    "datadir": "../data/",
+    "partition": "sflv2",
+    "alg": "fedavg",
+    "model": "alexnet",
+    "n_parties": 5,
+    "lr": 0.001,
+    "mu": 1,
+    "std_coeff": 2.5,
+    "unif_coeff": 0.5,
+    "batch_size": 128,
+    "load_first_net": 1,
+    "pool_option": "FIFO",
+    "model_buffer_size": 1,
+    "optimizer": "adam",
+    "simp_width": 1,
+    "out_dim": 256,
+    "reg": 1e-05,
+    "temperature": 0.5,
+    "logdir": "./",
+    "log_file_name": "experiment_log-alg=fedavg_partition=sflv2_lr=0.001_epochs=10_num_users=5_beta=0.01_batch_size=128_opt=adam_dataset=cifar10_2024-01-31-1634-13",
+    "seed": 42,
+    "device": "cuda",
+    "multiprocessing": 0
+}

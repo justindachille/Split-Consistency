@@ -42,7 +42,7 @@ def init_nets(n_parties, args, device, n_classes):
     global_server_model = None
     if args.alg == 'sflv2':
         if args.model == 'alexnet':
-            global_server_model = AlexNetClient(args, n_classes)
+            global_server_model = AlexNetServer(args, n_classes)
 
     for net_i in range(n_parties):
         if args.model == 'alexnet':
@@ -305,7 +305,7 @@ def main(args):
         party_list_this_round = party_list_rounds[round]
 
         # Check if the global model is a tuple (for sflv1)
-        if args.alg == 'sflv1':
+        if args.alg == 'sflv1' or args.alg == 'sflv2':
             global_client_model, _ = global_model
             global_client_model.eval()
             for param in global_client_model.parameters():
@@ -334,11 +334,14 @@ def main(args):
         avg_acc = 0.0
         acc_list = []
         if global_model:
-            if args.alg != 'sflv1' or args.alg != 'sflv2':
-                global_model.to(device)
-            else:
+            if args.alg == 'sflv1':
                 global_model[0].to(device)
                 global_model[1].to(device)
+            elif args.alg == 'sflv2':
+                global_model[0].to(device)
+                global_server_model.to(device)
+            else:
+                global_model.to(device)
 
         local_weights = []
 
@@ -390,9 +393,10 @@ def main(args):
                 
                 w_locals_client.append(client_model_state)
                 w_locals_server.append(server_model_state)
+            
             elif args.alg == 'sflv2':
-                client_server_nets = nets[net_id]
-                client_model_state = train_client_v2(net_id, client_server_nets, train_dl_local, n_epoch, cur_lr,
+                client_net = nets[net_id][0]
+                client_model_state = train_client_v2(net_id, client_net, train_dl_local, n_epoch, cur_lr,
                                                     args.optimizer, global_server_optimizer, args, round, 
                                                     global_server_model, device, logger)
                 
@@ -441,6 +445,24 @@ def main(args):
             test_acc, _ = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
             global_model[0].to('cpu')
             global_model[1].to('cpu')
+        elif args.alg == "sflv2":
+            w_glob_client = FedAvg(w_locals_client)
+
+            global_client_model, _ = global_model
+            global_client_model.load_state_dict(w_glob_client)
+
+            client_scheduler, server_scheduler = scheduler
+            client_scheduler.step()
+            server_scheduler.step()
+
+            global_model[0].to(device)
+            global_server_model.to(device)
+            global_client_model, _ = global_model
+
+            train_acc, train_loss = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
+            test_acc, _ = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
+            global_model[0].to('cpu')
+            global_server_model.to('cpu')
         else:
             w_glob_model = FedAvg(w_locals)
             global_model.load_state_dict(w_glob_model)
