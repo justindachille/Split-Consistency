@@ -30,7 +30,7 @@ def train_client_v1(net_id, nets, train_dataloader, epochs, lr, args_optimizer, 
             client_fx = client_output.clone().detach().requires_grad_(True)
 
             # Send client_output to server and get gradients
-            dfx, loss, acc = train_server(client_fx, target, args, device, net_server, optimizer_server)
+            dfx, loss, acc, net_server = train_server(client_fx, target, args, device, net_server, optimizer_server)
 
             # Backward pass using gradients from server
             client_output.backward(dfx)
@@ -61,7 +61,7 @@ def train_server(client_output, target, args, device, net_server, optimizer_serv
     dfx_client = client_output.grad.clone().detach()
     optimizer_server.step()
 
-    return dfx_client, loss.item(), acc
+    return dfx_client, loss.item(), acc, net_server
 
 def get_optimizer(model, lr, args_optimizer, args):
     if args_optimizer == 'adam':

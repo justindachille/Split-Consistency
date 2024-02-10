@@ -26,6 +26,7 @@ from nets.models import SimpleCNN
 from nets.models import ResNet_18
 from nets.models import ResNet_50
 from nets.models import AlexNetClient, AlexNetServer, AlexNet
+from nets.models import ResidualBlock, ResNet18_client_side, ResNet18_server_side
 
 from algs.fedavg import train_net_fedavg
 from algs.fedprox import train_net_fedprox
@@ -43,7 +44,8 @@ def init_nets(n_parties, args, device, n_classes):
     if args.alg == 'sflv2':
         if args.model == 'alexnet':
             global_server_model = AlexNetServer(args, n_classes)
-
+        elif args.model == 'resnet':
+            global_server_model = ResNet18_server_side(ResidualBlock, num_classes=n_classes)
     for net_i in range(n_parties):
         if args.model == 'alexnet':
             if args.alg == 'sflv1':
@@ -57,7 +59,14 @@ def init_nets(n_parties, args, device, n_classes):
         elif args.model == 'resnet-50':
             net = ResNet_50(args, n_classes)
         elif args.model == 'resnet-18':
-            net = ResNet_18(args, n_classes)
+            if args.alg == 'sflv1':
+                client_net = ResNet18_client_side(ResidualBlock, num_classes=n_classes)
+                server_net = ResNet18_server_side(ResidualBlock, num_classes=n_classes)
+            elif args.alg == 'sflv2':
+                client_net = ResNet18_client_side(ResidualBlock, num_classes=n_classes)
+                server_net = None
+            else:
+                net = ResNet_18(args, n_classes)
         elif args.model == 'simple-cnn':
             net = SimpleCNN(args.out_dim, n_classes, args.simp_width)
 
@@ -121,7 +130,7 @@ def main(args):
     }
     hparam_str = "_".join(f"{k}={v}" for k, v in hparams.items())
     if args.log_file_name is None:
-        args.log_file_name = f'experiment_log-{hparam_str}_{datetime.datetime.now().strftime("%Y-%m-%d-%H%M-%S")}'
+        args.log_file_name = f'logs/experiment_log-{hparam_str}_{datetime.datetime.now().strftime("%Y-%m-%d-%H%M-%S")}'
     log_path = args.log_file_name + '.log'
 
     reload(logging)
@@ -539,7 +548,7 @@ if __name__ == "__main__":
     
     parser.add_argument('--simp_width', type=int, default=1, help='multiplier for CNN channel width (only for simple-cnn)')
     parser.add_argument('--out_dim', type=int, default=256, help='the output dimension for the projection layer')
-    parser.add_argument('--reg', type=float, default=1e-5, help="L2 regularization strength")
+    parser.add_argument('--reg', type=float, default=5e-4, help="L2 regularization strength")
     parser.add_argument('--temperature', type=float, default=0.5, 
                         help='the temperature parameter for contrastive loss')
     

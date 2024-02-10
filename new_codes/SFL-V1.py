@@ -54,11 +54,10 @@ def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
 
 #===================================================================
 # No. of users
-num_users = 10
+num_users = 5
 epochs = 200
 frac = 1        # participation of clients; if 1 then 100% clients participate in SFLV1
 lr = 0.01
-
 
 #=====================================================================================================
 #                           Client-side Model definition
@@ -136,7 +135,6 @@ print(net_glob_client)
 #                           Server-side Model definition
 # =====================================================================================================
 # Model at server side
-
 
 
 class ResNet18_server_side(nn.Module):
@@ -580,10 +578,10 @@ dataset_test = datasets.CIFAR10('./data', train=False, download=True, transform=
 # ----------------------------------------------------------------
 # with open('beta=0.1.pkl', 'rb') as file:
 #     dict_users=pickle.load(file)
-# dict_users=cifar_user_dataset(dataset_train,num_users,0)
-with open('cifar0.1.txt', 'r') as file:
-    content = file.read()
-dict_users = eval(content)
+dict_users=cifar_user_dataset(dataset_train,num_users,0)
+# with open('cifar0.1.txt', 'r') as file:
+    # content = file.read()
+# dict_users = eval(content)
 dict_users_test = dataset_iid(dataset_test, num_users)
 #------------ Training And Testing  -----------------
 net_glob_client.train()
