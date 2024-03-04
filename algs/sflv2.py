@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from utils.calculate_acc import calculate_accuracy
 
 def train_client_v2(net_id, net_client, train_dataloader, epochs, lr, args_optimizer, optimizer_server, args, round, shared_server_model, device, logger):
+    print(f'training client {net_id} in sflv2')
     net_client = net_client.to(device)
     shared_server_model = shared_server_model.to(device)
 
@@ -43,7 +44,7 @@ def train_client_v2(net_id, net_client, train_dataloader, epochs, lr, args_optim
     return net_client.state_dict()
 
 def train_server(client_output, target, args, device, shared_server_model, optimizer_server):
-    shared_server_model = shared_server_model.to(device)
+    # shared_server_model = shared_server_model.to(device)
 
     criterion = nn.CrossEntropyLoss().to(device)
 

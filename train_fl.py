@@ -44,7 +44,7 @@ def init_nets(n_parties, args, device, n_classes):
     if args.alg == 'sflv2':
         if args.model == 'alexnet':
             global_server_model = AlexNetServer(args, n_classes)
-        elif args.model == 'resnet':
+        elif args.model == 'resnet-18':
             global_server_model = ResNet18_server_side(ResidualBlock, num_classes=n_classes)
     for net_i in range(n_parties):
         if args.model == 'alexnet':
@@ -455,10 +455,12 @@ def main(args):
             global_model[0].to('cpu')
             global_model[1].to('cpu')
         elif args.alg == "sflv2":
+            print('1')
             w_glob_client = FedAvg(w_locals_client)
 
             global_client_model, _ = global_model
             global_client_model.load_state_dict(w_glob_client)
+            print('2')
 
             client_scheduler, server_scheduler = scheduler
             client_scheduler.step()
@@ -467,11 +469,15 @@ def main(args):
             global_model[0].to(device)
             global_server_model.to(device)
             global_client_model, _ = global_model
+            print('3')
 
             train_acc, train_loss = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
+            print('4')
             test_acc, _ = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
+            print('5')
             global_model[0].to('cpu')
             global_server_model.to('cpu')
+            print('6')
         else:
             w_glob_model = FedAvg(w_locals)
             global_model.load_state_dict(w_glob_model)

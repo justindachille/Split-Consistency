@@ -558,10 +558,10 @@ dataset_test = datasets.CIFAR10('./data', train=False, download=True, transform=
 # ----------------------------------------------------------------
 # with open('beta=0.1.pkl', 'rb') as file:
 #     dict_users=pickle.load(file)
-# dict_users=cifar_user_dataset(dataset_train,num_users,0)
-with open('cifar0.1.txt', 'r') as file:
-    content = file.read()
-dict_users = eval(content)
+dict_users=cifar_user_dataset(dataset_train,num_users,0)
+# with open('cifar0.1.txt', 'r') as file:
+    # content = file.read()
+# dict_users = eval(content)
 dict_users_test = dataset_iid(dataset_test, num_users)
 
 #------------ Training And Testing -----------------
