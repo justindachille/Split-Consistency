@@ -13,7 +13,6 @@ def train_client_v1(net_id, nets, train_dataloader, epochs, lr, args_optimizer, 
     optimizer_server = get_optimizer(net_server, args.lr, args_optimizer, args)
 
     logger.info(f'Training network {net_id}')
-    logger.info(f'n_training: {len(train_dataloader)}')
 
     # Initialize client optimizer
     optimizer_client = get_optimizer(net_client, lr, args_optimizer, args)

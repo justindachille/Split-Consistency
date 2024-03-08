@@ -244,8 +244,6 @@ def main(args):
         test_dl = data.DataLoader(dataset=test_ds_global, batch_size=args.batch_size, num_workers=4, shuffle=False, 
                                  pin_memory=True, persistent_workers=True
                                  )
-    for i, train_dl in enumerate(train_dl_local_list):
-        print(f'train: {i} len: {len(train_dl)}')
         
     print("len train_dl_global:", len(train_ds_global))
     train_dl=None
@@ -455,29 +453,23 @@ def main(args):
             global_model[0].to('cpu')
             global_model[1].to('cpu')
         elif args.alg == "sflv2":
-            print('1')
             w_glob_client = FedAvg(w_locals_client)
 
             global_client_model, _ = global_model
             global_client_model.load_state_dict(w_glob_client)
-            print('2')
 
             client_scheduler, server_scheduler = scheduler
-            client_scheduler.step()
-            server_scheduler.step()
+#             client_scheduler.step()
+#             server_scheduler.step()
 
             global_model[0].to(device)
             global_server_model.to(device)
             global_client_model, _ = global_model
-            print('3')
 
             train_acc, train_loss = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
-            print('4')
             test_acc, _ = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
-            print('5')
             global_model[0].to('cpu')
             global_server_model.to('cpu')
-            print('6')
         else:
             w_glob_model = FedAvg(w_locals)
             global_model.load_state_dict(w_glob_model)
