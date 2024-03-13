@@ -14,6 +14,7 @@ from PIL import Image
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import copy
+from collections import Counter
 
 def record_net_data_stats(y_train, net_dataidx_map, logdir, logger):
     net_cls_counts = {}
@@ -143,7 +144,7 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
         batch_idxs = np.array_split(idxs, n_parties)
         net_dataidx_map = {i: batch_idxs[i] for i in range(n_parties)}
 
-    elif partition == "noniid-labeldir" or partition == "noniid":
+    elif partition == "noniid-labeldir" or partition == "noniid" or partition == 'subsample':
         min_size = 0
         min_require_size = 10
         K = 10
@@ -167,11 +168,16 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
                 proportions = (np.cumsum(proportions) * len(idx_k)).astype(int)[:-1]
                 idx_batch = [idx_j + idx.tolist() for idx_j, idx in zip(idx_batch, np.split(idx_k, proportions))]
                 min_size = min([len(idx_j) for idx_j in idx_batch])
+            
+            if partition == 'subsample':
+                idx_batch[0] = np.random.choice(idx_batch[0], size=5000, replace=False)
+                idx_batch[1] = np.random.choice(idx_batch[1], size=8000, replace=False)
 
 
         for j in range(n_parties):
             np.random.shuffle(idx_batch[j])
             net_dataidx_map[j] = idx_batch[j]
+            
 
     ########### SEE IF WE NEED THIS LATER ##############
     traindata_cls_counts = record_net_data_stats(y_train, net_dataidx_map, logdir, logger)
@@ -201,7 +207,6 @@ def dataset_non_iid_both(dataset_train, dataset_test, num_users, beta=0.5, subsa
     return dict_users_train, dict_users_test
 
 def dataset_non_iid(dataset, num_users, beta=0.5, dirichlet_dist_to_use=None, subsample_sizes=[5000, 8000]):
-    print('in dataset non iid')
     num_classes = len(set([label for _, label in dataset]))
     dict_users = {}
 
@@ -414,7 +419,33 @@ torch.multiprocessing.set_sharing_strategy(sharing_strategy)
 def set_worker_sharing_strategy(worker_id: int) -> None:
     torch.multiprocessing.set_sharing_strategy(sharing_strategy)
 
-def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=None, X_test=None, y_test=None, dataidxs=None, noise_level=0):
+def get_label_proportions(y_data, dataidxs):
+    labels = np.array(y_data)[dataidxs]
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    total_samples = len(labels)
+    label_proportions = [f"{label}:{count}" for label, count in zip(unique_labels, counts)]
+    label_proportions_str = ", ".join(label_proportions)
+    print(f'Label quantities: {label_proportions_str}')
+
+    label_prop_percentages = [count / total_samples for count in counts]
+    return unique_labels, counts, label_prop_percentages
+
+def get_stratified_test_split(y_test, unique_labels, label_prop_percentages):
+    test_stratified_idxs = []
+    unique_labels_test, counts_test = np.unique(y_test, return_counts=True)
+    label_prop_dict = dict(zip(unique_labels, label_prop_percentages))
+    for label, count in zip(unique_labels_test, counts_test):
+        if label in label_prop_dict:
+            prop = label_prop_dict[label]
+            label_idxs = np.where(y_test == label)[0]
+            label_test_count = int(prop * len(label_idxs))
+            test_stratified_idxs.extend(np.random.choice(label_idxs, size=label_test_count, replace=False))
+    return test_stratified_idxs
+
+def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=None, X_test=None, y_test=None, dataidxs=None, noise_level=0, partition=False):
+
+    test_dl_local = None
+    
     if ds_name in ('cifar10', 'cifar100'):
         if ds_name == 'cifar10':
             
@@ -456,15 +487,28 @@ def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=No
             transform_test = transforms.Compose([
                 transforms.ToTensor(),
                 normalize])
-
+            
+        
         train_ds = CustomDataset(X_train, y_train, transforms=transform_train)
         test_ds  = CustomDataset(X_test, y_test, transforms=transform_test)
 
+        
         train_ds = DatasetSplit(train_ds, dataidxs)
 
         train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=8, drop_last=True, shuffle=True, pin_memory=True, persistent_workers =True, worker_init_fn=set_worker_sharing_strategy)
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=8, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+        
+        if partition == 'subsample' and dataidxs is not None:
+            unique_labels, counts, label_prop_percentages = get_label_proportions(y_train, dataidxs)
+            test_stratified_idxs = get_stratified_test_split(y_test, unique_labels, label_prop_percentages)
+            test_ds_local = DatasetSplit(test_ds, test_stratified_idxs)
+            test_dl_local = data.DataLoader(dataset=test_ds_local, batch_size=test_bs, num_workers=8, shuffle=False, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
 
+            # Print test set indices/proportions
+            unique_labels_test, counts_test = np.unique(np.array(y_test)[test_stratified_idxs], return_counts=True)
+            test_label_proportions = [f"{label}:{count}" for label, count in zip(unique_labels_test, counts_test)]
+            test_label_proportions_str = ", ".join(test_label_proportions)
+            print(f'Test set label quantities: {test_label_proportions_str}')        
 
     elif ds_name == 'tinyimagenet':
         dl_obj = ImageFolder_custom
@@ -536,7 +580,7 @@ def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=No
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=8, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         
 
-    return train_dl, test_dl, train_ds, test_ds    
+    return train_dl, test_dl, train_ds, test_ds, test_dl_local
 
 def FedAvg(w):
     w_avg = copy.deepcopy(w[0])

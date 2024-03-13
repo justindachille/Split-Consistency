@@ -163,7 +163,7 @@ def main(args):
             for batch in dataloader:
                 labels = batch[1]
                 for label in labels:
-                    label = label.item()  # Convert to Python scalar
+                    label = label.item()
                     if label in label_counts:
                         label_counts[label] += 1
                     else:
@@ -195,7 +195,7 @@ def main(args):
         )
         
         n_classes = len(np.unique(y_train))
-        train_dl_global, test_dl, train_ds_global, test_ds_global = get_dataloader(args.dataset,
+        train_dl_global, test_dl, train_ds_global, test_ds_global, _ = get_dataloader(args.dataset,
                                                                                    args.datadir,
                                                                                    args.batch_size,
                                                                                    args.batch_size,
@@ -204,20 +204,19 @@ def main(args):
 
         train_dl_local_list, test_dl_local_list = [],[]
         for i in range(args.n_parties):
-
             dataidxs = net_dataidx_map[i]
-            train_dl_local, test_dl_local, _, _ = get_dataloader(args.dataset, 
+            train_dl_local, _, _, _, test_dl_local = get_dataloader(args.dataset, 
                                                                  args.datadir, 
                                                                  args.batch_size, 
                                                                  args.batch_size, 
                                                                  X_train, y_train,
                                                                  X_test, y_test,
-                                                                 dataidxs)
+                                                                 dataidxs, partition=args.partition)
             
             train_dl_local_list.append(train_dl_local)
             test_dl_local_list.append(test_dl_local)
 
-        train_dl_global, test_dl_global, _, _ = get_dataloader(args.dataset, 
+        train_dl_global, test_dl_global, _, _, _ = get_dataloader(args.dataset, 
                                                                args.datadir, 
                                                                args.batch_size, 
                                                                args.batch_size,
@@ -245,13 +244,9 @@ def main(args):
                                  pin_memory=True, persistent_workers=True
                                  )
         
-    print("len train_dl_global:", len(train_ds_global))
     train_dl=None
     data_size = len(test_ds_global)
 
-    print("len test_dl_global:", data_size)
-    print(f"n_classes: {n_classes}")
-    
     if args.alg != 'sflv2':
         nets, local_model_meta_data, layer_type, _ = init_nets(args.n_parties, args, device, n_classes)
         global_models, global_model_meta_data, global_layer_type, _ = init_nets(1, args, device, n_classes)
@@ -506,6 +501,11 @@ def main(args):
 
         print("TIME: ", time.time()-cur_time)
         print("************************************\n\n")
+    
+    print("Starting Fine Tuning...")
+    logger.info("Starting Fine Tuning...")
+
+    # Fine tuning here
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
