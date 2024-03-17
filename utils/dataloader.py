@@ -170,6 +170,7 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
                 min_size = min([len(idx_j) for idx_j in idx_batch])
             
             if partition == 'subsample':
+                assert(args.n_parties == 2)
                 idx_batch[0] = np.random.choice(idx_batch[0], size=5000, replace=False)
                 idx_batch[1] = np.random.choice(idx_batch[1], size=8000, replace=False)
 

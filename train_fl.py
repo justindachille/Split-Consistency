@@ -216,13 +216,6 @@ def main(args):
             train_dl_local_list.append(train_dl_local)
             test_dl_local_list.append(test_dl_local)
 
-        train_dl_global, test_dl_global, _, _, _ = get_dataloader(args.dataset, 
-                                                               args.datadir, 
-                                                               args.batch_size, 
-                                                               args.batch_size,
-                                                               X_train, y_train,
-                                                               X_test, y_test)
-        
     else:
         all_train_ds, train_ds_global, train_dl_global, test_ds_global, test_dl = load_feature_shift(args)
         
@@ -506,6 +499,75 @@ def main(args):
     logger.info("Starting Fine Tuning...")
 
     # Fine tuning here
+    def should_terminate(patience, max_patience, acc, best_acc):
+        if acc > best_acc:
+            best_acc = acc
+            patience = 0
+        else:
+            patience += 1
+        
+        should_stop = patience >= max_patience
+        
+        return should_stop, patience, best_acc,
+        
+    if args.alg == 'sflv1':
+        for net_id in range(args.n_parties):
+            patience = 0
+            max_patience = 3
+            best_acc = 0.0
+            print(f'Fine tuning user {net_id}')
+            client_server_nets = nets[net_id]
+            for i in range(50):
+                train_dl_local = train_dl_local_list[net_id]
+                client_model_state, server_model_state = train_client_v1(net_id, client_server_nets, train_dl_local, n_epoch, cur_lr, args.optimizer, args, round, device, logger)
+                
+                client_server_nets[0].load_state_dict(client_model_state)
+                client_server_nets[1].load_state_dict(server_model_state)
+                
+                local_test_acc, _ = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
+                global_test_acc, _ = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl, get_confusion_matrix=False, device=device)
+                
+                print(f'Local Acc: {local_test_acc} Global Acc: {global_test_acc}')
+
+                should_stop, patience, best_acc = should_terminate(patience, max_patience, local_test_acc, best_acc)
+                
+                if should_stop:
+                    print(f'Client {net_id} stopping after {i} epochs')
+                    break
+    elif args.alg == 'sflv2':
+        save_global_server_model = copy.deepcopy(global_server_model)
+        for net_id in range(args.n_parties):
+            patience = 0
+            max_patience = 3
+            best_acc = 0.0
+            print(f'Fine tuning user {net_id}')
+            client_server_nets = nets[net_id]
+            for i in range(50):
+                train_dl_local = train_dl_local_list[net_id]
+                
+                client_net = nets[net_id][0]
+                client_model_state = train_client_v2(net_id, client_net, train_dl_local, n_epoch, cur_lr,
+                                                    args.optimizer, global_server_optimizer, args, round, 
+                                                    global_server_model, device, logger)
+                
+                w_locals_client.append(client_model_state)
+                
+                client_model_state, server_model_state = train_client_v1(net_id, client_server_nets, train_dl_local, n_epoch, cur_lr, args.optimizer, args, round, device, logger)
+                
+                client_server_nets[0].load_state_dict(client_model_state)
+                client_server_nets[1].load_state_dict(server_model_state)
+                
+                local_test_acc, _ = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
+                global_test_acc, _ = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl, get_confusion_matrix=False, device=device)
+                
+                print(f'Local Acc: {local_test_acc} Global Acc: {global_test_acc}')
+
+                should_stop, patience, best_acc = should_terminate(patience, max_patience, local_test_acc, best_acc)
+                
+                if should_stop:
+                    print(f'Client {net_id} stopping after {i} epochs')
+                    break
+        
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

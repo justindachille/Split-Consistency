@@ -43,19 +43,17 @@ def train_client_v2(net_id, net_client, train_dataloader, epochs, lr, args_optim
     return net_client.state_dict()
 
 def train_server(client_output, target, args, device, shared_server_model, optimizer_server):
-    # shared_server_model = shared_server_model.to(device)
-
     criterion = nn.CrossEntropyLoss().to(device)
 
     optimizer_server.zero_grad()
     server_output = shared_server_model(client_output)
 
     loss = criterion(server_output, target)
-    loss.backward()
-
     acc = calculate_accuracy(server_output, target)
-
+    
+    loss.backward()
     dfx_client = client_output.grad.clone().detach()
+    optimizer_server.step()
 
     return dfx_client, loss.item(), acc
 
