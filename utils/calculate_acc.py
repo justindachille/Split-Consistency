@@ -4,45 +4,45 @@ import torch
 import numpy as np
 
 def compute_accuracy(model, dataloader, get_confusion_matrix=False, device="cpu"):
-
     model.cuda()
     model.eval()
+
     true_labels_list, pred_labels_list = np.array([]), np.array([])
-
     correct, total = 0, 0
+    top5_correct = 0
 
-    #criterion = nn.CrossEntropyLoss().to(device)
-    criterion = nn.CrossEntropyLoss().cuda()
+    criterion = nn.CrossEntropyLoss().to(device)
     loss_collector = []
 
     with torch.no_grad():
         for batch_idx, (x, target) in enumerate(dataloader):
-            #x, target = x.to(device), target.to(dtype=torch.int64).to(device)
-            #x, target = x.cuda(), target.to(dtype=torch.int64).cuda()
             x, target = x.to(device, non_blocking=True), target.to(device, non_blocking=True)
-
             _, _, out, _, _ = model(x)
+
             loss = criterion(out, target)
             loss_collector.append(loss.item())
+
             _, pred_label = torch.max(out.data, 1)
-            
             total += x.data.size()[0]
             correct += (pred_label == target.data).sum().item()
 
+            # Calculate top-5 accuracy
+            _, top5_pred = out.topk(5, 1, True, True)
+            top5_correct += (top5_pred == target.data.view(-1, 1).expand_as(top5_pred)).sum().item()
 
             pred_labels_list = np.append(pred_labels_list, pred_label.cpu().numpy())
             true_labels_list = np.append(true_labels_list, target.data.cpu().numpy())
-        avg_loss = sum(loss_collector) / len(loss_collector)
+
+    avg_loss = sum(loss_collector) / len(loss_collector)
+    top1_accuracy = correct / float(total)
+    top5_accuracy = top5_correct / float(total)
 
     if get_confusion_matrix:
         conf_matrix = confusion_matrix(true_labels_list, pred_labels_list)
+        return top1_accuracy, conf_matrix, avg_loss, top5_accuracy
 
-    if get_confusion_matrix:
-        return correct / float(total), conf_matrix, avg_loss
-    
     model.train()
-    
-    return correct / float(total), avg_loss
+    return top1_accuracy, avg_loss, top5_accuracy
 
 def compute_accuracy_split_model(global_net_client, global_net_server, dataloader, get_confusion_matrix=False, device="cpu"):
     global_net_client.to(device).eval()

@@ -35,6 +35,7 @@ from algs.moon import train_net_moon
 from algs.feduv import train_net_feduv
 from algs.sflv1 import train_client_v1
 from algs.sflv2 import train_client_v2
+from algs.fine_tuning import fine_tune
 
 from utils.calculate_acc import compute_accuracy, compute_accuracy_split_model
 
@@ -48,16 +49,7 @@ def init_nets(n_parties, args, device, n_classes):
         elif args.model == 'resnet-18':
             global_server_model = ResNet18_server_side(ResidualBlock, num_classes=n_classes)
     for net_i in range(n_parties):
-        if args.model == 'alexnet':
-            if args.alg == 'sflv1':
-                client_net = AlexNetClient(args, n_classes)
-                server_net = AlexNetServer(args, n_classes)
-            elif args.alg == 'sflv2':
-                client_net = AlexNetClient(args, n_classes)
-                server_net = None
-            else:
-                net = AlexNet(args, n_classes)
-        elif args.model == 'resnet-50':
+        if args.model == 'resnet-50':
             net = ResNet_50(args, n_classes)
         elif args.model == 'resnet-18':
             if args.alg == 'sflv1':
@@ -106,7 +98,9 @@ def main(args):
         device = torch.device('cpu')
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
     elif args.device != '':
-        device = args.device
+        cuda, number = args.device.split(":")
+        os.environ["CUDA_VISIBLE_DEVICES"] = f"{number}"
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     if type(device) != str and args.device == 'cuda' and device.type == 'cpu':
         print("GPU not detected, defaulting to CPU")
@@ -294,6 +288,9 @@ def main(args):
     best_global_train_top5 = 0.0
     best_global_test_top5 = 0.0
     for round in range(n_comm_rounds):
+        if args.alg == 'local_training':
+            break
+        
         print("\n\n************************************")
         print("round: ", round)
         cur_time = time.time()
@@ -471,8 +468,8 @@ def main(args):
             global_model.load_state_dict(w_glob_model)
             scheduler.step()
             global_model.to(device)
-            train_acc, train_loss = compute_accuracy(global_model, train_dl_global, device=device)
-            test_acc, _ = compute_accuracy(global_model, test_dl, get_confusion_matrix=False, device=device)
+            train_acc, train_loss, train_acc_top5 = compute_accuracy(global_model, train_dl_global, device=device)
+            test_acc, _, test_acc_top5 = compute_accuracy(global_model, test_dl, get_confusion_matrix=False, device=device)
             global_model.to('cpu')
         
         logger.info(f'>> Global Model Train accuracy: {train_acc:.4f}, Train accuracy top-5: {train_acc_top5:.4f}')
@@ -535,14 +532,24 @@ def main(args):
         best_acc_top5 = max(acc_top5, best_acc_top5)
         return best_acc, best_acc_top5    
     
+    print("Starting Fine Tuning...")
+    logger.info("Starting Fine Tuning...")
+
     best_local_accs = [0.0] * args.n_parties
-    best_global_accs = [0.0] * args.n_parties
-    
     best_local_accs_top5 = [0.0] * args.n_parties
+    best_global_accs = [0.0] * args.n_parties
     best_global_accs_top5 = [0.0] * args.n_parties
-    
-    if args.alg == 'sflv1':
-        for net_id in range(args.n_parties):
+
+    for net_id in range(args.n_parties):
+        print(f'Fine-tuning user {net_id}')
+        train_dl_local, test_dl_local = train_dl_local_list[net_id], test_dl_local_list[net_id]
+        if args.alg == 'sflv2':
+            save_global_server_model = copy.deepcopy(global_server_model)
+
+        if args.alg in ['fedavg', 'fedprox', 'moon', 'local_training']:
+            net = nets[net_id]
+            best_local_acc, best_local_acc_top5, best_global_acc, best_global_acc_top5 = fine_tune(net, train_dl_local, test_dl_local, test_dl, device, args, logger)
+        elif args.alg == 'sflv1':
             patience = 0
             max_patience = 3
             best_acc = 0.0
@@ -568,45 +575,49 @@ def main(args):
                 if should_stop:
                     print(f'Client {net_id} stopping after {i} epochs')
                     break
-    elif args.alg == 'sflv2':
-        save_global_server_model = copy.deepcopy(global_server_model)
-        for net_id in range(args.n_parties):
-            patience = 0
-            max_patience = 3
-            best_acc = 0.0
-            print(f'Fine tuning user {net_id}')
-            client_server_nets = nets[net_id]
-            global_server_model = copy.deepcopy(save_global_server_model)
-            for i in range(50):
-                train_dl_local = train_dl_local_list[net_id]
-                
-                client_net = nets[net_id][0]
-                client_model_state = train_client_v2(net_id, client_net, train_dl_local, n_epoch, cur_lr,
-                                                    args.optimizer, global_server_optimizer, args, round, 
-                                                    global_server_model, device, logger)
-                
-                w_locals_client.append(client_model_state)
-                
-                client_server_nets[0].load_state_dict(client_model_state)
-                
-                local_test_acc, _, local_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], global_server_model, test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
-                global_test_acc, _, global_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], global_server_model, test_dl, get_confusion_matrix=False, device=device)
-                
-                print(f'Local Acc: {local_test_acc} Global Acc: {global_test_acc}')
+        elif args.alg == 'sflv2':
+            for net_id in range(args.n_parties):
+                patience = 0
+                max_patience = 3
+                best_acc = 0.0
+                print(f'Fine tuning user {net_id}')
+                client_server_nets = nets[net_id]
+                global_server_model = copy.deepcopy(save_global_server_model)
+                for i in range(50):
+                    train_dl_local = train_dl_local_list[net_id]
 
-                should_stop, patience, best_acc = should_terminate(patience, max_patience, local_test_acc, best_acc)
-                
-                best_local_accs[net_id], best_local_accs_top5[net_id] = get_best_accs(local_test_acc, local_test_acc_top5, best_local_accs[net_id], best_local_accs_top5[net_id])
-                best_global_accs[net_id], best_global_accs_top5[net_id] = get_best_accs(global_test_acc, global_test_acc_top5, best_global_accs[net_id], best_global_accs_top5[net_id])
-                
-                if local_test_acc > best_local_accs[net_id]:
-                    best_local_accs[net_id] = local_test_acc
-                if global_test_acc > best_global_accs[net_id]:
-                    best_global_accs[net_id] = global_test_acc
-                
-                if should_stop:
-                    print(f'Client {net_id} stopping after {i} epochs')
-                    break
+                    client_net = nets[net_id][0]
+                    client_model_state = train_client_v2(net_id, client_net, train_dl_local, n_epoch, cur_lr,
+                                                        args.optimizer, global_server_optimizer, args, round, 
+                                                        global_server_model, device, logger)
+
+                    w_locals_client.append(client_model_state)
+
+                    client_server_nets[0].load_state_dict(client_model_state)
+
+                    local_test_acc, _, local_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], global_server_model, test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
+                    global_test_acc, _, global_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], global_server_model, test_dl, get_confusion_matrix=False, device=device)
+
+                    print(f'Local Acc: {local_test_acc} Global Acc: {global_test_acc}')
+
+                    should_stop, patience, best_acc = should_terminate(patience, max_patience, local_test_acc, best_acc)
+
+                    best_local_accs[net_id], best_local_accs_top5[net_id] = get_best_accs(local_test_acc, local_test_acc_top5, best_local_accs[net_id], best_local_accs_top5[net_id])
+                    best_global_accs[net_id], best_global_accs_top5[net_id] = get_best_accs(global_test_acc, global_test_acc_top5, best_global_accs[net_id], best_global_accs_top5[net_id])
+
+                    if local_test_acc > best_local_accs[net_id]:
+                        best_local_accs[net_id] = local_test_acc
+                    if global_test_acc > best_global_accs[net_id]:
+                        best_global_accs[net_id] = global_test_acc
+
+                    if should_stop:
+                        print(f'Client {net_id} stopping after {i} epochs')
+                        break
+
+        best_local_accs[net_id] = best_local_acc
+        best_local_accs_top5[net_id] = best_local_acc_top5
+        best_global_accs[net_id] = best_global_acc
+        best_global_accs_top5[net_id] = best_global_acc_top5    
         
     hparams = {k.replace('--', ''): v for k, v in vars(args).items()}
     hparams_str = str(hparams)
@@ -626,21 +637,35 @@ def main(args):
         for net_id in range(args.n_parties):
             writer.writerow([net_id, best_local_accs[net_id], best_local_accs_top5[net_id], best_global_accs[net_id], best_global_accs_top5[net_id], best_global_train, best_global_test, best_global_train_top5, best_global_test_top5, hparams_str])
         
+def run_experiment(seed, alpha, dataset, args):
+    args_copy = copy.deepcopy(args)
+
+    # Set seeds
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+
+    args_copy.seed = seed
+    args_copy.alpha = alpha
+    args_copy.dataset = dataset
+
+    print(f'Running experiment on dataset {args_copy.dataset} with seed {args_copy.seed} and dirich alpha {args_copy.alpha}')
+    main(args_copy)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epochs', type=int, default=10, help='number of local epochs')
     parser.add_argument('--comm_round', type=int, default=100, help='number of maximum communication rounds')
     parser.add_argument('--sample_fraction', type=float, default=1.0, 
                         help='how many clients are sampled in each round')    
-    parser.add_argument('--alpha', type=float, default=0.01, 
-                        help='The parameter for the dirichlet distribution for data partitioning')
+    parser.add_argument('--alpha', type=float, nargs='+', default=[0.01], help='The parameters for the dirichlet distribution for data partitioning')
     
-    parser.add_argument('--dataset', type=str, default='stl10', help='dataset used for training')
+    parser.add_argument('--dataset', type=str, nargs='+', default=['cifar10'], help='The dataset to use')
     parser.add_argument('--datadir', type=str, required=False, default="../data/", help="Data directory")
     parser.add_argument('--partition', type=str, required=False, default='noniid', help='the data partitioning strategy')
     
     parser.add_argument('--alg', type=str, default='feduv',
-                        help='federated learning framework: fedavg/fedprox/moon/freeze/feduv')    
+                        help='federated learning framework: fedavg/fedprox/moon/freeze/feduv/sflv1/sflv2')    
     parser.add_argument('--model', type=str, default='simple-cnn', help='neural network used in training')
     
     parser.add_argument('--n_parties', type=int, default=10, help='number of workers in a distributed cluster')   
@@ -672,9 +697,17 @@ if __name__ == "__main__":
     parser.add_argument('--logdir', type=str, required=False, default="./", help='Log directory path')
     parser.add_argument('--log_file_name', type=str, default=None, help='The log file name')
 
-    parser.add_argument('--seed', type=int, default=42, help='The seed number')
+    parser.add_argument('--seed', type=int, nargs='+', default=[42], help='The seed numbers')
     parser.add_argument('--device', type=str, default='cuda', help='The device to run the program (cuda/cpu)')
     
-    args = parser.parse_args()    
-    main(args)
+    args = parser.parse_args()
+    print(args.dataset)
+    for dataset in args.dataset:
+        print(dataset)
+    
+    for seed in args.seed:
+        for alpha in args.alpha:
+            for dataset in args.dataset:
+                print(f'dataset: {dataset}')
+                run_experiment(seed, alpha, dataset, args)
     
