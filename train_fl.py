@@ -9,6 +9,7 @@ import os
 import copy
 import datetime
 import random
+import csv
 from importlib import reload
 
 import argparse
@@ -103,18 +104,20 @@ def main(args):
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     elif args.device == 'cpu':
         device = torch.device('cpu')
-        os.environ["CUDA_VISIBLE_DEVICES"] = ""    
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+    elif args.device != '':
+        device = args.device
 
-    if args.device == 'cuda' and device.type == 'cpu':
+    if type(device) != str and args.device == 'cuda' and device.type == 'cpu':
         print("GPU not detected, defaulting to CPU")
 
-    print("Device: ", device.type)
+    print("Device: ", device)
 
-    if device.type == 'cuda':
+    if type(device) != str and device.type == 'cuda':
         args.multiprocessing=0
         
     print(f"Algorithm: {args.alg}")
-        
+
     #2. Init logs
     hparams = {
         'alg': args.alg,
@@ -285,6 +288,11 @@ def main(args):
                                     weight_decay=args.reg)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(global_optimizer, n_comm_rounds)
 
+    best_global_train = 0.0
+    best_global_test = 0.0
+    
+    best_global_train_top5 = 0.0
+    best_global_test_top5 = 0.0
     for round in range(n_comm_rounds):
         print("\n\n************************************")
         print("round: ", round)
@@ -436,8 +444,8 @@ def main(args):
             global_model[1].to(device)
             global_client_model, global_server_model = global_model
 
-            train_acc, train_loss = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
-            test_acc, _ = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
+            train_acc, train_loss, train_acc_top5 = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
+            test_acc, _, test_acc_top5 = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
             global_model[0].to('cpu')
             global_model[1].to('cpu')
         elif args.alg == "sflv2":
@@ -447,15 +455,15 @@ def main(args):
             global_client_model.load_state_dict(w_glob_client)
 
             client_scheduler, server_scheduler = scheduler
-#             client_scheduler.step()
-#             server_scheduler.step()
+            client_scheduler.step()
+            server_scheduler.step()
 
             global_model[0].to(device)
             global_server_model.to(device)
             global_client_model, _ = global_model
 
-            train_acc, train_loss = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
-            test_acc, _ = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
+            train_acc, train_loss, train_acc_top5 = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
+            test_acc, _, test_acc_top5 = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
             global_model[0].to('cpu')
             global_server_model.to('cpu')
         else:
@@ -466,14 +474,20 @@ def main(args):
             train_acc, train_loss = compute_accuracy(global_model, train_dl_global, device=device)
             test_acc, _ = compute_accuracy(global_model, test_dl, get_confusion_matrix=False, device=device)
             global_model.to('cpu')
-        logger.info('>> Global Model Train accuracy: %f' % train_acc)
-        logger.info('>> Global Model Test accuracy: %f' % test_acc)
-        logger.info('>> Global Model Train loss: %f' % train_loss)
+        
+        logger.info(f'>> Global Model Train accuracy: {train_acc:.4f}, Train accuracy top-5: {train_acc_top5:.4f}')
+        logger.info(f'>> Global Model Test accuracy: {test_acc:.4f}, Test accuracy top-5: {test_acc_top5:.4f}')
+        logger.info(f'>> Global Model Train loss: {train_loss:.4f}')
 
-        print('>> Global Model Train accuracy: %f' % train_acc)
-        print('>> Global Model Test accuracy: %f' % test_acc)
-        print('>> Global Model Train loss: %f' % train_loss)
+        print(f'>> Global Model Train accuracy: {train_acc:.4f}, Train accuracy top-5: {train_acc_top5:.4f}')
+        print(f'>> Global Model Test accuracy: {test_acc:.4f}, Test accuracy top-5: {test_acc_top5:.4f}')
+        print(f'>> Global Model Train loss: {train_loss:.4f}')
 
+        best_global_train = max(best_global_train, train_acc)
+        best_global_test = max(best_global_test, test_acc)
+        best_global_train_top5 = max(best_global_train_top5, train_acc_top5)
+        best_global_test_top5 = max(best_global_test_top5, test_acc_top5)
+        
         if args.alg == 'moon':
             if len(old_nets_pool) < args.model_buffer_size:
                 old_nets = copy.deepcopy(nets)
@@ -509,7 +523,24 @@ def main(args):
         should_stop = patience >= max_patience
         
         return should_stop, patience, best_acc,
-        
+    
+    def get_best_accs(acc, acc_top5, best_acc, best_acc_top5):
+        """
+        Function to get the best top-1 and top-5 accuracies.
+
+        Returns:
+            tuple: (best_acc, best_acc_top5)
+        """
+        best_acc = max(acc, best_acc)
+        best_acc_top5 = max(acc_top5, best_acc_top5)
+        return best_acc, best_acc_top5    
+    
+    best_local_accs = [0.0] * args.n_parties
+    best_global_accs = [0.0] * args.n_parties
+    
+    best_local_accs_top5 = [0.0] * args.n_parties
+    best_global_accs_top5 = [0.0] * args.n_parties
+    
     if args.alg == 'sflv1':
         for net_id in range(args.n_parties):
             patience = 0
@@ -524,11 +555,14 @@ def main(args):
                 client_server_nets[0].load_state_dict(client_model_state)
                 client_server_nets[1].load_state_dict(server_model_state)
                 
-                local_test_acc, _ = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
-                global_test_acc, _ = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl, get_confusion_matrix=False, device=device)
+                local_test_acc, _, local_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
+                global_test_acc, _, global_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl, get_confusion_matrix=False, device=device)
                 
                 print(f'Local Acc: {local_test_acc} Global Acc: {global_test_acc}')
 
+                best_local_accs[net_id], best_local_accs_top5[net_id] = get_best_accs(local_test_acc, local_test_acc_top5, best_local_accs[net_id], best_local_accs_top5[net_id])
+                best_global_accs[net_id], best_global_accs_top5[net_id] = get_best_accs(global_test_acc, global_test_acc_top5, best_global_accs[net_id], best_global_accs_top5[net_id])
+                
                 should_stop, patience, best_acc = should_terminate(patience, max_patience, local_test_acc, best_acc)
                 
                 if should_stop:
@@ -542,6 +576,7 @@ def main(args):
             best_acc = 0.0
             print(f'Fine tuning user {net_id}')
             client_server_nets = nets[net_id]
+            global_server_model = copy.deepcopy(save_global_server_model)
             for i in range(50):
                 train_dl_local = train_dl_local_list[net_id]
                 
@@ -552,22 +587,44 @@ def main(args):
                 
                 w_locals_client.append(client_model_state)
                 
-                client_model_state, server_model_state = train_client_v1(net_id, client_server_nets, train_dl_local, n_epoch, cur_lr, args.optimizer, args, round, device, logger)
-                
                 client_server_nets[0].load_state_dict(client_model_state)
-                client_server_nets[1].load_state_dict(server_model_state)
                 
-                local_test_acc, _ = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
-                global_test_acc, _ = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl, get_confusion_matrix=False, device=device)
+                local_test_acc, _, local_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], global_server_model, test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
+                global_test_acc, _, global_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], global_server_model, test_dl, get_confusion_matrix=False, device=device)
                 
                 print(f'Local Acc: {local_test_acc} Global Acc: {global_test_acc}')
 
                 should_stop, patience, best_acc = should_terminate(patience, max_patience, local_test_acc, best_acc)
                 
+                best_local_accs[net_id], best_local_accs_top5[net_id] = get_best_accs(local_test_acc, local_test_acc_top5, best_local_accs[net_id], best_local_accs_top5[net_id])
+                best_global_accs[net_id], best_global_accs_top5[net_id] = get_best_accs(global_test_acc, global_test_acc_top5, best_global_accs[net_id], best_global_accs_top5[net_id])
+                
+                if local_test_acc > best_local_accs[net_id]:
+                    best_local_accs[net_id] = local_test_acc
+                if global_test_acc > best_global_accs[net_id]:
+                    best_global_accs[net_id] = global_test_acc
+                
                 if should_stop:
                     print(f'Client {net_id} stopping after {i} epochs')
                     break
         
+    hparams = {k.replace('--', ''): v for k, v in vars(args).items()}
+    hparams_str = str(hparams)
+    
+    file_exists = os.path.isfile('logs/best_accuracies.csv')
+    has_header = False
+
+    with open('logs/best_accuracies.csv', 'a', newline='') as file:
+        writer = csv.writer(file)
+
+        # Add header if file is new or doesn't have a header
+        if not file_exists or os.stat('logs/best_accuracies.csv').st_size == 0:
+            writer.writerow(['Client ID', 'Best Local Accuracy', 'Best Local Accuracy Top-5', 'Best Global Accuracy', 'Best Global Accuracy Top-5', 'Best Global Model Train', 'Best Global Model Test', 'Best Global Model Train', 'Best Global Model Test', 'Hyperparameters'])
+            has_header = True
+
+        # Write data rows
+        for net_id in range(args.n_parties):
+            writer.writerow([net_id, best_local_accs[net_id], best_local_accs_top5[net_id], best_global_accs[net_id], best_global_accs_top5[net_id], best_global_train, best_global_test, best_global_train_top5, best_global_test_top5, hparams_str])
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

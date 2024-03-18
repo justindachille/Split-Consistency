@@ -1,0 +1,34 @@
+03-13 15:28 INFO     cuda
+03-13 15:28 INFO     Command Line Arguments: 
+{
+    "epochs": 5,
+    "comm_round": 0,
+    "sample_fraction": 1.0,
+    "alpha": 0.1,
+    "dataset": "cifar10",
+    "datadir": "../data/",
+    "partition": "subsample",
+    "alg": "sflv1",
+    "model": "resnet-18",
+    "n_parties": 2,
+    "lr": 0.01,
+    "mu": 1,
+    "std_coeff": 2.5,
+    "unif_coeff": 0.5,
+    "batch_size": 128,
+    "load_first_net": 1,
+    "pool_option": "FIFO",
+    "model_buffer_size": 1,
+    "optimizer": "sgd",
+    "simp_width": 1,
+    "out_dim": 256,
+    "reg": 0.0005,
+    "temperature": 0.5,
+    "logdir": "./",
+    "log_file_name": "logs/experiment_log-alg=sflv1_partition=subsample_lr=0.01_epochs=5_num_users=2_beta=0.1_batch_size=128_opt=sgd_dataset=cifar10_2024-03-13-1528-17",
+    "seed": 42,
+    "device": "cuda",
+    "multiprocessing": 0
+}
+03-13 15:28 INFO     Data statistics: {0: {2: 218, 3: 1079, 4: 996, 6: 6, 7: 460, 8: 1142, 9: 1099}, 1: {0: 1452, 1: 1430, 2: 1162, 3: 1, 4: 193, 5: 1494, 6: 1397, 7: 871}}
+03-13 15:28 INFO     Starting Fine Tuning...
