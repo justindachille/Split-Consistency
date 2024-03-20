@@ -622,14 +622,14 @@ def main(args):
     hparams = {k.replace('--', ''): v for k, v in vars(args).items()}
     hparams_str = str(hparams)
     
-    file_exists = os.path.isfile('logs/best_accuracies.csv')
+    file_exists = os.path.isfile(args.accuracies_file)
     has_header = False
 
-    with open('logs/best_accuracies.csv', 'a', newline='') as file:
+    with open(args.accuracies_file, 'a', newline='') as file:
         writer = csv.writer(file)
 
         # Add header if file is new or doesn't have a header
-        if not file_exists or os.stat('logs/best_accuracies.csv').st_size == 0:
+        if not file_exists or os.stat(args.accuracies_file).st_size == 0:
             writer.writerow(['Client ID', 'Best Local Accuracy', 'Best Local Accuracy Top-5', 'Best Global Accuracy', 'Best Global Accuracy Top-5', 'Best Global Model Train', 'Best Global Model Test', 'Best Global Model Train', 'Best Global Model Test', 'Hyperparameters'])
             has_header = True
 
@@ -651,7 +651,7 @@ def run_experiment(seed, alpha, dataset, args):
 
     hyperparams = {k: v for k, v in vars(args_copy).items() if k != 'log_file_name'}
 
-    with open('logs/best_accuracies.csv', 'r') as file:
+    with open(args.accuracies_file, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
             saved_hyperparams = eval(row['Hyperparameters'])
@@ -709,6 +709,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--seed', type=int, nargs='+', default=[42], help='The seed numbers')
     parser.add_argument('--device', type=str, default='cuda', help='The device to run the program (cuda/cpu)')
+
+    parser.add_argument('--accuracies_file', type=str, default='logs/best_accuracies.csv', help='The file path to store the best accuracies')
     
     args = parser.parse_args()
     print(args.dataset)
