@@ -649,6 +649,16 @@ def run_experiment(seed, alpha, dataset, args):
     args_copy.alpha = alpha
     args_copy.dataset = dataset
 
+    hyperparams = {k: v for k, v in vars(args_copy).items() if k != 'log_file_name'}
+
+    with open('logs/best_accuracies.csv', 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            saved_hyperparams = eval(row['Hyperparameters'])
+            if all(saved_hyperparams.get(k) == v for k, v in hyperparams.items()):
+                print(f"Skipping experiment with hyperparameters: {hyperparams}")
+                return
+
     print(f'Running experiment on dataset {args_copy.dataset} with seed {args_copy.seed} and dirich alpha {args_copy.alpha}')
     main(args_copy)
 
