@@ -614,11 +614,6 @@ def main(args):
                         print(f'Client {net_id} stopping after {i} epochs')
                         break
 
-        best_local_accs[net_id] = best_local_acc
-        best_local_accs_top5[net_id] = best_local_acc_top5
-        best_global_accs[net_id] = best_global_acc
-        best_global_accs_top5[net_id] = best_global_acc_top5    
-        
     hparams = {k.replace('--', ''): v for k, v in vars(args).items()}
     hparams_str = str(hparams)
     
