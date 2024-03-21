@@ -638,16 +638,13 @@ def main(args):
         
 def run_experiment(seed, alpha, dataset, args):
     args_copy = copy.deepcopy(args)
-
     # Set seeds
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
-
     args_copy.seed = seed
     args_copy.alpha = alpha
     args_copy.dataset = dataset
-
     hyperparams = {k: v for k, v in vars(args_copy).items() if k != 'log_file_name'}
 
     if not os.path.isfile(args.accuracies_file):
@@ -655,16 +652,20 @@ def run_experiment(seed, alpha, dataset, args):
             writer = csv.DictWriter(file, fieldnames=['Hyperparameters'])
             writer.writeheader()
 
+    experiment_exists = False
     with open(args.accuracies_file, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            saved_hyperparams = eval(row['Hyperparameters'])
-            if all(saved_hyperparams.get(k) == v for k, v in hyperparams.items()):
-                print(f"Skipping experiment with hyperparameters: {hyperparams}")
-                return
+            if 'Hyperparameters' in row:
+                saved_hyperparams = eval(row['Hyperparameters'])
+                if all(saved_hyperparams.get(k) == v for k, v in hyperparams.items()):
+                    print(f"Skipping experiment with hyperparameters: {hyperparams}")
+                    experiment_exists = True
+                    break
 
-    print(f'Running experiment on dataset {args_copy.dataset} with seed {args_copy.seed} and dirich alpha {args_copy.alpha}')
-    main(args_copy)
+    if not experiment_exists:
+        print(f'Running experiment on dataset {args_copy.dataset} with seed {args_copy.seed} and dirich alpha {args_copy.alpha}')
+        main(args_copy)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
