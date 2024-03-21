@@ -549,6 +549,10 @@ def main(args):
         if args.alg in ['fedavg', 'fedprox', 'moon', 'local_training']:
             net = nets[net_id]
             best_local_acc, best_local_acc_top5, best_global_acc, best_global_acc_top5 = fine_tune(net, train_dl_local, test_dl_local, test_dl, device, args, logger)
+            best_local_accs[net_id] = best_local_acc
+            best_local_accs_top5[net_id] = best_local_acc_top5
+            best_global_accs[net_id] = best_global_acc
+            best_global_accs_top5[net_id] = best_global_acc_top5
         elif args.alg == 'sflv1':
             patience = 0
             max_patience = 3
@@ -645,6 +649,11 @@ def run_experiment(seed, alpha, dataset, args):
     args_copy.dataset = dataset
 
     hyperparams = {k: v for k, v in vars(args_copy).items() if k != 'log_file_name'}
+
+    if not os.path.isfile(args.accuracies_file):
+        with open(args.accuracies_file, 'w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=['Hyperparameters'])
+            writer.writeheader()
 
     with open(args.accuracies_file, 'r') as file:
         reader = csv.DictReader(file)
