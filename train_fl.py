@@ -657,11 +657,15 @@ def run_experiment(seed, alpha, dataset, args):
         reader = csv.DictReader(file)
         for row in reader:
             if 'Hyperparameters' in row:
-                saved_hyperparams = eval(row['Hyperparameters'])
-                if all(saved_hyperparams.get(k) == v for k, v in hyperparams.items()):
-                    print(f"Skipping experiment with hyperparameters: {hyperparams}")
-                    experiment_exists = True
-                    break
+                try:
+                    saved_hyperparams = eval(row['Hyperparameters'])
+                    if isinstance(saved_hyperparams, dict) and all(saved_hyperparams.get(k) == v for k, v in hyperparams.items()):
+                        print(f"Skipping experiment with hyperparameters: {hyperparams}")
+                        experiment_exists = True
+                        break
+                except (TypeError, ValueError):
+                    # Skip the row if saved_hyperparams is not a valid dictionary
+                    continue
 
     if not experiment_exists:
         print(f'Running experiment on dataset {args_copy.dataset} with seed {args_copy.seed} and dirich alpha {args_copy.alpha}')
