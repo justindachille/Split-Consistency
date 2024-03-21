@@ -645,27 +645,23 @@ def run_experiment(seed, alpha, dataset, args):
     args_copy.seed = seed
     args_copy.alpha = alpha
     args_copy.dataset = dataset
-    hyperparams = {k: v for k, v in vars(args_copy).items() if k != 'log_file_name'}
+    hyperparams = {k: v for k, v in vars(args_copy).items()}
 
     if not os.path.isfile(args.accuracies_file):
         with open(args.accuracies_file, 'w', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=['Hyperparameters'])
+            writer = csv.DictWriter(file, fieldnames=['Client ID', 'Best Local Accuracy', 'Best Local Accuracy Top-5', 'Best Global Accuracy', 'Best Global Accuracy Top-5', 'Best Global Model Train', 'Best Global Model Test', 'Best Global Model Train', 'Best Global Model Test', 'Hyperparameters'])
             writer.writeheader()
 
     experiment_exists = False
     with open(args.accuracies_file, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            if 'Hyperparameters' in row:
-                try:
-                    saved_hyperparams = eval(row['Hyperparameters'])
-                    if isinstance(saved_hyperparams, dict) and all(saved_hyperparams.get(k) == v for k, v in hyperparams.items()):
-                        print(f"Skipping experiment with hyperparameters: {hyperparams}")
-                        experiment_exists = True
-                        break
-                except (TypeError, ValueError):
-                    # Skip the row if saved_hyperparams is not a valid dictionary
-                    continue
+            
+            saved_hyperparams = eval(row['Hyperparameters'])
+            exclude_keys = ['log_file_name', 'device']
+            if all(saved_hyperparams.get(k) == v for k, v in hyperparams.items() if k not in exclude_keys):
+                print(f"Skipping experiment with hyperparameters: {hyperparams}")
+                return
 
     if not experiment_exists:
         print(f'Running experiment on dataset {args_copy.dataset} with seed {args_copy.seed} and dirich alpha {args_copy.alpha}')
