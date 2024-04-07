@@ -376,8 +376,8 @@ class CustomDataset(Dataset):
         self.targets = torch.LongTensor(targets)
         self.transforms = transforms
 
-        print(self.data.shape)
-        print(self.targets.shape)
+#         print(self.data.shape)
+#         print(self.targets.shape)
 
     def __len__(self):
         return self.targets.shape[0]

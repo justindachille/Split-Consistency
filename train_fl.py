@@ -24,10 +24,10 @@ import copy
 from utils.dataloader import DatasetSplit, partition_data, get_dataloader, FedAvg
 
 from nets.models import SimpleCNN
-from nets.models import ResNet_18
-from nets.models import ResNet_50
-from nets.models import AlexNetClient, AlexNetServer, AlexNet
-from nets.models import ResidualBlock, ResNet18_client_side, ResNet18_server_side
+from nets.models import AlexNet, AlexNetClient, AlexNetServer
+from nets.models import ResNet_18, ResidualBlock, ResNet_18_client_side, ResNet_18_server_side
+from nets.models import ResNet_50, ResNet_50_client_side, ResNet_50_server_side
+from nets.models import VGG16, VGG16_client_side, VGG16_server_side
 
 from algs.fedavg import train_net_fedavg
 from algs.fedprox import train_net_fedprox
@@ -39,6 +39,23 @@ from algs.fine_tuning import fine_tune
 
 from utils.calculate_acc import compute_accuracy, compute_accuracy_split_model
 
+def print_split_parameter_settings(client_net, server_net, i):
+    print(i)
+    if i > 0:
+        return
+    total_params = sum(p.numel() for p in client_net.parameters()) + sum(p.numel() for p in server_net.parameters())
+
+    # Print the number of parameters and percentage for each model
+    print("Client-side model:")
+    client_params = sum(p.numel() for p in client_net.parameters())
+    print(f"Number of parameters: {client_params}")
+    print(f"Percentage of total parameters: {client_params / total_params * 100:.2f}%")
+
+    print("Server-side model:")
+    server_params = sum(p.numel() for p in server_net.parameters())
+    print(f"Number of parameters: {server_params}")
+    print(f"Percentage of total parameters: {server_params / total_params * 100:.2f}%\n")
+    
 
 def init_nets(n_parties, args, device, n_classes):
     nets = {net_i: (None, None) for net_i in range(n_parties)}
@@ -47,22 +64,41 @@ def init_nets(n_parties, args, device, n_classes):
         if args.model == 'alexnet':
             global_server_model = AlexNetServer(args, n_classes)
         elif args.model == 'resnet-18':
-            global_server_model = ResNet18_server_side(ResidualBlock, num_classes=n_classes)
+            global_server_model = ResNet_18_server_side(ResidualBlock, args, num_classes=n_classes)
     for net_i in range(n_parties):
         if args.model == 'resnet-50':
-            net = ResNet_50(args, n_classes)
+            if args.alg == 'sflv1':
+                client_net = ResNet_50_client_side(args)
+                server_net = ResNet_50_server_side(args, num_classes=n_classes)
+                print_split_parameter_settings(client_net, server_net, net_i)
+            elif args.alg == 'sflv2':
+                client_net = ResNet_50_client_side(args)
+                server_net = None
+                print_split_parameter_settings(client_net, server_net, net_i)
+            else:
+                net = ResNet_50(args, n_classes)
         elif args.model == 'resnet-18':
             if args.alg == 'sflv1':
-                client_net = ResNet18_client_side(ResidualBlock, num_classes=n_classes)
-                server_net = ResNet18_server_side(ResidualBlock, num_classes=n_classes)
+                client_net = ResNet_18_client_side(ResidualBlock, args)
+                server_net = ResNet_18_server_side(ResidualBlock, args, num_classes=n_classes)
             elif args.alg == 'sflv2':
-                client_net = ResNet18_client_side(ResidualBlock, num_classes=n_classes)
+                client_net = ResNet_18_client_side(ResidualBlock, args)
                 server_net = None
             else:
                 net = ResNet_18(args, n_classes)
         elif args.model == 'simple-cnn':
             net = SimpleCNN(args.out_dim, n_classes, args.simp_width)
-
+        elif args.model == 'vgg-16':
+            if args.alg == 'sflv1':
+                client_net = VGG16_client_side(args)
+                server_net = VGG16_server_side(args, num_classes=n_classes)
+                print_split_parameter_settings(client_net, server_net, net_i)
+            elif args.alg == 'sflv2':
+                client_net = VGG16_client_side(args)
+                server_net = None
+                print_split_parameter_settings(client_net, server_net, net_i)
+            else:
+                net = VGG16(n_classes)
         if args.alg == 'sflv1':
             nets[net_i] = (client_net.to(device), server_net.to(device))
         elif args.alg == 'sflv2':
@@ -505,11 +541,7 @@ def main(args):
 
         print("TIME: ", time.time()-cur_time)
         print("************************************\n\n")
-    
-    print("Starting Fine Tuning...")
-    logger.info("Starting Fine Tuning...")
 
-    # Fine tuning here
     def should_terminate(patience, max_patience, acc, best_acc):
         if acc > best_acc:
             best_acc = acc
@@ -540,84 +572,86 @@ def main(args):
     best_global_accs = [0.0] * args.n_parties
     best_global_accs_top5 = [0.0] * args.n_parties
 
-    for net_id in range(args.n_parties):
-        print(f'Fine-tuning user {net_id}')
-        train_dl_local, test_dl_local = train_dl_local_list[net_id], test_dl_local_list[net_id]
-        if args.alg == 'sflv2':
-            save_global_server_model = copy.deepcopy(global_server_model)
+    if args.partition == 'subsample':
+        for net_id in range(args.n_parties):
+            print(f'Fine-tuning user {net_id}')
+            train_dl_local, test_dl_local = train_dl_local_list[net_id], test_dl_local_list[net_id]
+            if args.alg == 'sflv2':
+                save_global_server_model = copy.deepcopy(global_server_model)
 
-        if args.alg in ['fedavg', 'fedprox', 'moon', 'local_training']:
-            net = nets[net_id]
-            best_local_acc, best_local_acc_top5, best_global_acc, best_global_acc_top5 = fine_tune(net, train_dl_local, test_dl_local, test_dl, device, args, logger)
-            best_local_accs[net_id] = best_local_acc
-            best_local_accs_top5[net_id] = best_local_acc_top5
-            best_global_accs[net_id] = best_global_acc
-            best_global_accs_top5[net_id] = best_global_acc_top5
-        elif args.alg == 'sflv1':
-            patience = 0
-            max_patience = 3
-            best_acc = 0.0
-            print(f'Fine tuning user {net_id}')
-            client_server_nets = nets[net_id]
-            for i in range(50):
-                train_dl_local = train_dl_local_list[net_id]
-                client_model_state, server_model_state = train_client_v1(net_id, client_server_nets, train_dl_local, n_epoch, cur_lr, args.optimizer, args, round, device, logger)
-                
-                client_server_nets[0].load_state_dict(client_model_state)
-                client_server_nets[1].load_state_dict(server_model_state)
-                
-                local_test_acc, _, local_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
-                global_test_acc, _, global_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl, get_confusion_matrix=False, device=device)
-                
-                print(f'Local Acc: {local_test_acc} Global Acc: {global_test_acc}')
-
-                best_local_accs[net_id], best_local_accs_top5[net_id] = get_best_accs(local_test_acc, local_test_acc_top5, best_local_accs[net_id], best_local_accs_top5[net_id])
-                best_global_accs[net_id], best_global_accs_top5[net_id] = get_best_accs(global_test_acc, global_test_acc_top5, best_global_accs[net_id], best_global_accs_top5[net_id])
-                
-                should_stop, patience, best_acc = should_terminate(patience, max_patience, local_test_acc, best_acc)
-                
-                if should_stop:
-                    print(f'Client {net_id} stopping after {i} epochs')
-                    break
-        elif args.alg == 'sflv2':
-            for net_id in range(args.n_parties):
+            if args.alg in ['fedavg', 'fedprox', 'moon', 'local_training']:
+                net = nets[net_id]
+                best_local_acc, best_local_acc_top5, best_global_acc, best_global_acc_top5 = fine_tune(net, train_dl_local, test_dl_local, test_dl, device, args, logger)
+                best_local_accs[net_id] = best_local_acc
+                best_local_accs_top5[net_id] = best_local_acc_top5
+                best_global_accs[net_id] = best_global_acc
+                best_global_accs_top5[net_id] = best_global_acc_top5
+            elif args.alg == 'sflv1':
                 patience = 0
                 max_patience = 3
                 best_acc = 0.0
                 print(f'Fine tuning user {net_id}')
                 client_server_nets = nets[net_id]
-                global_server_model = copy.deepcopy(save_global_server_model)
                 for i in range(50):
                     train_dl_local = train_dl_local_list[net_id]
-
-                    client_net = nets[net_id][0]
-                    client_model_state = train_client_v2(net_id, client_net, train_dl_local, n_epoch, cur_lr,
-                                                        args.optimizer, global_server_optimizer, args, round, 
-                                                        global_server_model, device, logger)
-
-                    w_locals_client.append(client_model_state)
+                    client_model_state, server_model_state = train_client_v1(net_id, client_server_nets, train_dl_local, n_epoch, cur_lr, args.optimizer, args, round, device, logger)
 
                     client_server_nets[0].load_state_dict(client_model_state)
+                    client_server_nets[1].load_state_dict(server_model_state)
 
-                    local_test_acc, _, local_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], global_server_model, test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
-                    global_test_acc, _, global_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], global_server_model, test_dl, get_confusion_matrix=False, device=device)
+                    local_test_acc, _, local_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
+                    global_test_acc, _, global_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], client_server_nets[1], test_dl, get_confusion_matrix=False, device=device)
 
                     print(f'Local Acc: {local_test_acc} Global Acc: {global_test_acc}')
-
-                    should_stop, patience, best_acc = should_terminate(patience, max_patience, local_test_acc, best_acc)
 
                     best_local_accs[net_id], best_local_accs_top5[net_id] = get_best_accs(local_test_acc, local_test_acc_top5, best_local_accs[net_id], best_local_accs_top5[net_id])
                     best_global_accs[net_id], best_global_accs_top5[net_id] = get_best_accs(global_test_acc, global_test_acc_top5, best_global_accs[net_id], best_global_accs_top5[net_id])
 
-                    if local_test_acc > best_local_accs[net_id]:
-                        best_local_accs[net_id] = local_test_acc
-                    if global_test_acc > best_global_accs[net_id]:
-                        best_global_accs[net_id] = global_test_acc
+                    should_stop, patience, best_acc = should_terminate(patience, max_patience, local_test_acc, best_acc)
 
                     if should_stop:
                         print(f'Client {net_id} stopping after {i} epochs')
                         break
+            elif args.alg == 'sflv2':
+                for net_id in range(args.n_parties):
+                    patience = 0
+                    max_patience = 3
+                    best_acc = 0.0
+                    print(f'Fine tuning user {net_id}')
+                    client_server_nets = nets[net_id]
+                    global_server_model = copy.deepcopy(save_global_server_model)
+                    for i in range(50):
+                        train_dl_local = train_dl_local_list[net_id]
 
+                        client_net = nets[net_id][0]
+                        client_model_state = train_client_v2(net_id, client_net, train_dl_local, n_epoch, cur_lr,
+                                                            args.optimizer, global_server_optimizer, args, round, 
+                                                            global_server_model, device, logger)
+
+                        w_locals_client.append(client_model_state)
+
+                        client_server_nets[0].load_state_dict(client_model_state)
+
+                        local_test_acc, _, local_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], global_server_model, test_dl_local_list[net_id], get_confusion_matrix=False, device=device)
+                        global_test_acc, _, global_test_acc_top5 = compute_accuracy_split_model(client_server_nets[0], global_server_model, test_dl, get_confusion_matrix=False, device=device)
+
+                        print(f'Local Acc: {local_test_acc} Global Acc: {global_test_acc}')
+
+                        should_stop, patience, best_acc = should_terminate(patience, max_patience, local_test_acc, best_acc)
+
+                        best_local_accs[net_id], best_local_accs_top5[net_id] = get_best_accs(local_test_acc, local_test_acc_top5, best_local_accs[net_id], best_local_accs_top5[net_id])
+                        best_global_accs[net_id], best_global_accs_top5[net_id] = get_best_accs(global_test_acc, global_test_acc_top5, best_global_accs[net_id], best_global_accs_top5[net_id])
+
+                        if local_test_acc > best_local_accs[net_id]:
+                            best_local_accs[net_id] = local_test_acc
+                        if global_test_acc > best_global_accs[net_id]:
+                            best_global_accs[net_id] = global_test_acc
+
+                        if should_stop:
+                            print(f'Client {net_id} stopping after {i} epochs')
+                            break
+
+                            
     hparams = {k.replace('--', ''): v for k, v in vars(args).items()}
     hparams_str = str(hparams)
     
@@ -682,6 +716,7 @@ if __name__ == "__main__":
     parser.add_argument('--alg', type=str, default='feduv',
                         help='federated learning framework: fedavg/fedprox/moon/freeze/feduv/sflv1/sflv2')    
     parser.add_argument('--model', type=str, default='simple-cnn', help='neural network used in training')
+    parser.add_argument('--split_layer', type=int, default=4, help='layer by which to split model in split learning')   
     
     parser.add_argument('--n_parties', type=int, default=10, help='number of workers in a distributed cluster')   
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
