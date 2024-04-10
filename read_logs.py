@@ -72,10 +72,29 @@ grouped = df.groupby(groupby_columns)
 # Calculate the stats for each group
 stats = grouped.apply(calc_stats).reset_index()
 
+def getTitle(alg):
+    algorithm = ""
+    if args.alg == "local_training":
+        algorithm = "Local Training"
+    elif args.alg == 'sflv1':
+        algorithm = "SFL-V1 ($L_c=4$)"
+    elif args.alg == 'sflv2':
+        algorithm = "SFL-V2 ($L_c=4$)"
+    elif args.alg == 'fedavg':
+        algorithm = "Fedavg"
+    elif args.alg == 'fedprox':
+        algorithm = "Fedprox"
+    elif args.alg == 'moon':
+        algorithm = 'MOON'
+    else:
+        assert(ValueError("Bad alg input"))
+    return algorithm
+
 if args.table_format:
     print("\\textbf{Algorithms} & Global model accuracy & Client A's local / global FT accuracy & Client B's local / global FT accuracy\\\\ \\hline")
     for _, row in stats.iterrows():
-        algorithm = f"{args.alg} {row['alpha']}"
+        algorithm = getTitle(args)
+
         global_model_acc = f"{row['mean_best_global_model_test']:.2f} ± {row['std_best_global_model_test']:.2f}"
         client_a_local_global = f"{row['mean_local_accuracy_Client A']:.2f} ± {row['std_local_accuracy_Client A']:.2f} / {row['mean_global_accuracy_Client A']:.2f} ± {row['std_global_accuracy_Client A']:.2f}"
         client_b_local_global = f"{row['mean_local_accuracy_Client B']:.2f} ± {row['std_local_accuracy_Client B']:.2f} / {row['mean_global_accuracy_Client B']:.2f} ± {row['std_global_accuracy_Client B']:.2f}"
@@ -87,18 +106,18 @@ else:
         print("\\centering")
         print(f"\\caption{{Training results for alpha={alpha_value}:}}")
         print("\\begin{adjustbox}{max width=\\textwidth}")
-        print("\\begin{tabular}{|l|c|c|c|c|c|c|c|c|} \\hline")
-        headers = "Algorithm & Global Test Acc. & Global Top5 Test Acc. & Global Train & Global Test & Client A Local \\textbar{} Top5 \\textbar{} Global & Client B Local \\textbar{} Top5 \\textbar{} Global \\\\ \\hline"
+        print("\\begin{tabular}{|l|c|c|c|c|c|c|} \\hline")
+        headers = "Algorithm & Global Test Acc. & Global Top5 Test Acc. & Client A Local \\textbar{} Top5 \\textbar{} Global & Client B Local \\textbar{} Top5 \\textbar{} Global \\\\ \\hline"
         print(headers)
         for _, row in stats.iterrows():
-            algorithm = f"{args.alg} {alpha_value}"
-            global_test_acc = f"{row['mean_global_accuracy']:.2f} ± {row['std_global_accuracy']:.2f}%"
-            global_top5_test_acc = f"{row['mean_global_top5_accuracy']:.2f} ± {row['std_global_top5_accuracy']:.2f}%"
-            global_train = f"{row['mean_best_global_model_train']:.2f} ± {row['std_best_global_model_train']:.2f}%"
-            global_test = f"{row['mean_best_global_model_test']:.2f} ± {row['std_best_global_model_test']:.2f}%"
-            client_a_local_top5_global = f"{row['mean_local_accuracy_Client A']:.2f} ± {row['std_local_accuracy_Client A']:.2f}% \\textbar{{}} {row['mean_local_top5_accuracy_Client A']:.2f} ± {row['std_local_top5_accuracy_Client A']:.2f}% \\textbar{{}} {row['mean_global_accuracy_Client A']:.2f} ± {row['std_global_accuracy_Client A']:.2f}%"
-            client_b_local_top5_global = f"{row['mean_local_accuracy_Client B']:.2f} ± {row['std_local_accuracy_Client B']:.2f}% \\textbar{{}} {row['mean_local_top5_accuracy_Client B']:.2f} ± {row['std_local_top5_accuracy_Client B']:.2f}% \\textbar{{}} {row['mean_global_accuracy_Client B']:.2f} ± {row['std_global_accuracy_Client B']:.2f}%"
-            print(f"{algorithm} & {global_test_acc} & {global_top5_test_acc} & {global_train} & {global_test} & {client_a_local_top5_global} & {client_b_local_top5_global} \\\\ \\hline")
+            algorithm = getTitle(args)
+            global_test_acc = f"{row['mean_global_accuracy']:.2f} ± {row['std_global_accuracy']:.2f}"
+            global_top5_test_acc = f"{row['mean_global_top5_accuracy']:.2f} ± {row['std_global_top5_accuracy']:.2f}"
+            global_train = f"{row['mean_best_global_model_train']:.2f} ± {row['std_best_global_model_train']:.2f}"
+            global_test = f"{row['mean_best_global_model_test']:.2f} ± {row['std_best_global_model_test']:.2f}"
+            client_a_local_top5_global = f"{row['mean_local_accuracy_Client A']:.2f} ± {row['std_local_accuracy_Client A']:.2f} \\textbar{{}} {row['mean_local_top5_accuracy_Client A']:.2f} ± {row['std_local_top5_accuracy_Client A']:.2f} \\textbar{{}} {row['mean_global_accuracy_Client A']:.2f} ± {row['std_global_accuracy_Client A']:.2f}"
+            client_b_local_top5_global = f"{row['mean_local_accuracy_Client B']:.2f} ± {row['std_local_accuracy_Client B']:.2f} \\textbar{{}} {row['mean_local_top5_accuracy_Client B']:.2f} ± {row['std_local_top5_accuracy_Client B']:.2f} \\textbar{{}} {row['mean_global_accuracy_Client B']:.2f} ± {row['std_global_accuracy_Client B']:.2f}"
+            print(f"{algorithm} & {global_test_acc} & {global_top5_test_acc} & {client_a_local_top5_global} & {client_b_local_top5_global} \\\\ \\hline")
         print("\\end{tabular}")
         print("\\end{adjustbox}")
         print("\\end{table}")
