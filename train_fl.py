@@ -40,7 +40,6 @@ from algs.fine_tuning import fine_tune
 from utils.calculate_acc import compute_accuracy, compute_accuracy_split_model
 
 def print_split_parameter_settings(client_net, server_net, i):
-    print(i)
     if i > 0:
         return
     total_params = sum(p.numel() for p in client_net.parameters()) + sum(p.numel() for p in server_net.parameters())
@@ -65,6 +64,11 @@ def init_nets(n_parties, args, device, n_classes):
             global_server_model = AlexNetServer(args, n_classes)
         elif args.model == 'resnet-18':
             global_server_model = ResNet_18_server_side(ResidualBlock, args, num_classes=n_classes)
+        elif args.model == 'resnet-50':
+            global_server_model = ResNet_50_server_side(args, num_classes=n_classes)
+        elif args.model == 'vgg-16':
+            global_server_model = VGG16_server_side(args, num_classes=n_classes)
+            
     for net_i in range(n_parties):
         if args.model == 'resnet-50':
             if args.alg == 'sflv1':
@@ -74,13 +78,13 @@ def init_nets(n_parties, args, device, n_classes):
             elif args.alg == 'sflv2':
                 client_net = ResNet_50_client_side(args)
                 server_net = None
-                print_split_parameter_settings(client_net, server_net, net_i)
             else:
                 net = ResNet_50(args, n_classes)
         elif args.model == 'resnet-18':
             if args.alg == 'sflv1':
                 client_net = ResNet_18_client_side(ResidualBlock, args)
                 server_net = ResNet_18_server_side(ResidualBlock, args, num_classes=n_classes)
+                print_split_parameter_settings(client_net, server_net, net_i)
             elif args.alg == 'sflv2':
                 client_net = ResNet_18_client_side(ResidualBlock, args)
                 server_net = None
@@ -96,7 +100,6 @@ def init_nets(n_parties, args, device, n_classes):
             elif args.alg == 'sflv2':
                 client_net = VGG16_client_side(args)
                 server_net = None
-                print_split_parameter_settings(client_net, server_net, net_i)
             else:
                 net = VGG16(n_classes)
         if args.alg == 'sflv1':
@@ -686,16 +689,17 @@ def run_experiment(seed, alpha, dataset, args):
             writer = csv.DictWriter(file, fieldnames=['Client ID', 'Best Local Accuracy', 'Best Local Accuracy Top-5', 'Best Global Accuracy', 'Best Global Accuracy Top-5', 'Best Global Model Train', 'Best Global Model Test', 'Best Global Model Train', 'Best Global Model Test', 'Hyperparameters'])
             writer.writeheader()
 
-    experiment_exists = False
-    with open(args.accuracies_file, 'r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            
-            saved_hyperparams = eval(row['Hyperparameters'])
-            exclude_keys = ['log_file_name', 'device']
-            if all(saved_hyperparams.get(k) == v for k, v in hyperparams.items() if k not in exclude_keys):
-                print(f"Skipping experiment with hyperparameters: {hyperparams}")
-                return
+    if not args.dont_skip:
+        experiment_exists = False
+        with open(args.accuracies_file, 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+
+                saved_hyperparams = eval(row['Hyperparameters'])
+                exclude_keys = ['log_file_name', 'device']
+                if all(saved_hyperparams.get(k) == v for k, v in hyperparams.items() if k not in exclude_keys):
+                    print(f"Skipping experiment with hyperparameters: {hyperparams}")
+                    return
 
     if not experiment_exists:
         print(f'Running experiment on dataset {args_copy.dataset} with seed {args_copy.seed} and dirich alpha {args_copy.alpha}')
@@ -752,6 +756,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--accuracies_file', type=str, default='logs/best_accuracies.csv', help='The file path to store the best accuracies')
     
+    parser.add_argument('--dont_skip', action='store_true', help='Do not skip repetitious experiments')
+
     args = parser.parse_args()
     print(args.dataset)
     for dataset in args.dataset:

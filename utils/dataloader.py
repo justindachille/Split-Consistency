@@ -32,7 +32,8 @@ def record_net_data_stats(y_train, net_dataidx_map, logdir, logger):
         data_list.append(n_total)
     print('mean:', np.mean(data_list))
     print('std:', np.std(data_list))
-    logger.info('Data statistics: %s' % str(net_cls_counts))
+    if logger is not None:
+        logger.info('Data statistics: %s' % str(net_cls_counts))
 
     return net_cls_counts
 
