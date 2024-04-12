@@ -9,12 +9,17 @@ def train_client_v1(net_id, nets, train_dataloader, epochs, lr, args_optimizer, 
     net_client, net_server = nets
     net_client = net_client.to(device)
     net_server = net_server.to(device)
+    net_server_state_dict = net_server.state_dict()
 
     optimizer_server = get_optimizer(net_server, args.lr, args_optimizer, args)
 
     logger.info(f'Training network {net_id}')
 
     optimizer_client = get_optimizer(net_client, lr, args_optimizer, args)
+    if len(train_dataloader) == 0:
+        logger.info(f'Client {net_id} has no data. Skipping training.')
+        net_client.to('cpu')
+        return net_client.state_dict(), net_server_state_dict    
 
     for epoch in range(epochs):
         epoch_loss_collector = []
@@ -25,10 +30,11 @@ def train_client_v1(net_id, nets, train_dataloader, epochs, lr, args_optimizer, 
 
             # Forward pass on client model
             client_output = net_client(x)
+            
             client_fx = client_output.clone().detach().requires_grad_(True)
 
             # Send client_output to server and get gradients
-            dfx, loss, acc, net_server = train_server(client_fx, target, args, device, net_server, optimizer_server)
+            dfx, loss, acc, net_server_state_dict = train_server(client_fx, target, args, device, net_server, net_server_state_dict, optimizer_server)
 
             # Backward pass using gradients from server
             client_output.backward(dfx)
@@ -43,7 +49,10 @@ def train_client_v1(net_id, nets, train_dataloader, epochs, lr, args_optimizer, 
     
     return net_client.state_dict(), net_server.state_dict()
 
-def train_server(client_output, target, args, device, net_server, optimizer_server):
+def train_server(client_output, target, args, device, net_server, net_server_state_dict, optimizer_server):
+#     print('requires grad:', client_output.requires_grad_)
+
+    net_server.load_state_dict(net_server_state_dict)
     net_server = net_server.to(device)
 
     criterion = nn.CrossEntropyLoss().to(device)
@@ -59,7 +68,7 @@ def train_server(client_output, target, args, device, net_server, optimizer_serv
     dfx_client = client_output.grad.clone().detach()
     optimizer_server.step()
 
-    return dfx_client, loss.item(), acc, net_server
+    return dfx_client, loss.item(), acc, net_server.state_dict()
 
 def get_optimizer(model, lr, args_optimizer, args):
     if args_optimizer == 'adam':

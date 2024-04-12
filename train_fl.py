@@ -231,7 +231,7 @@ def main(args):
         )
         
         n_classes = len(np.unique(y_train))
-        train_dl_global, test_dl, train_ds_global, test_ds_global, _ = get_dataloader(args.dataset,
+        train_dl_global, test_dl, train_ds_global, test_ds_global, _ = get_dataloader(args, args.dataset,
                                                                                    args.datadir,
                                                                                    args.batch_size,
                                                                                    args.batch_size,
@@ -241,7 +241,7 @@ def main(args):
         train_dl_local_list, test_dl_local_list = [],[]
         for i in range(args.n_parties):
             dataidxs = net_dataidx_map[i]
-            train_dl_local, _, _, _, test_dl_local = get_dataloader(args.dataset, 
+            train_dl_local, _, _, _, test_dl_local = get_dataloader(args, args.dataset, 
                                                                  args.datadir, 
                                                                  args.batch_size, 
                                                                  args.batch_size, 
@@ -344,7 +344,19 @@ def main(args):
         party_list_this_round = party_list_rounds[round]
 
         # Check if the global model is a tuple (for sflv1)
-        if args.alg == 'sflv1' or args.alg == 'sflv2':
+        if args.alg == 'sflv1':
+            global_client_model, global_server_model = global_model
+            global_client_model.eval()
+            for param in global_client_model.parameters():
+                param.requires_grad = False
+            global_client_w = global_client_model.state_dict()
+            global_server_w = global_server_model.state_dict()
+
+            nets_this_round = {k: nets[k] for k in party_list_this_round}
+            for net_id, (client_net, server_net) in nets_this_round.items():
+                client_net.load_state_dict(global_client_w)
+                server_net.load_state_dict(global_server_w)
+        elif args.alg == 'sflv2':
             global_client_model, _ = global_model
             global_client_model.eval()
             for param in global_client_model.parameters():
@@ -352,7 +364,7 @@ def main(args):
             global_client_w = global_client_model.state_dict()
 
             nets_this_round = {k: nets[k] for k in party_list_this_round}
-            for net_id, (client_net, server_net) in nets_this_round.items():
+            for net_id, (client_net, _) in nets_this_round.items():
                 client_net.load_state_dict(global_client_w)
         else:
             global_model.eval()
@@ -394,6 +406,10 @@ def main(args):
             train_dl_local, test_dl_local = train_dl_local_list[net_id], test_dl_local_list[net_id]
             logger.info(f"Training network {(str(net_id))} n_training: {len(train_dl_local.dataset)}")
 
+            if len(train_dl_local.dataset) == 0:
+                logger.info(f"Skipping training for network {net_id} due to no data")
+                continue
+                
             if args.alg == 'moon':
                 prev_models=[]
                 for i in range(len(old_nets_pool)):
@@ -476,9 +492,10 @@ def main(args):
             client_scheduler.step()
             server_scheduler.step()
 
+            global_model = (global_client_model, global_server_model)
+            
             global_model[0].to(device)
             global_model[1].to(device)
-            global_client_model, global_server_model = global_model
 
             train_acc, train_loss, train_acc_top5 = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
             test_acc, _, test_acc_top5 = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
@@ -510,7 +527,7 @@ def main(args):
             train_acc, train_loss, train_acc_top5 = compute_accuracy(global_model, train_dl_global, device=device)
             test_acc, _, test_acc_top5 = compute_accuracy(global_model, test_dl, get_confusion_matrix=False, device=device)
             global_model.to('cpu')
-        
+
         logger.info(f'>> Global Model Train accuracy: {train_acc:.4f}, Train accuracy top-5: {train_acc_top5:.4f}')
         logger.info(f'>> Global Model Test accuracy: {test_acc:.4f}, Test accuracy top-5: {test_acc_top5:.4f}')
         logger.info(f'>> Global Model Train loss: {train_loss:.4f}')
@@ -758,6 +775,9 @@ if __name__ == "__main__":
     
     parser.add_argument('--dont_skip', action='store_true', help='Do not skip repetitious experiments')
 
+    parser.add_argument('--n_train_workers', type=int, default=8, help='number of workers in a distributed cluster')   
+    parser.add_argument('--n_test_workers', type=int, default=8, help='number of workers in a distributed cluster')   
+    
     args = parser.parse_args()
     print(args.dataset)
     for dataset in args.dataset:
