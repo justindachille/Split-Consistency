@@ -683,7 +683,7 @@ def main(args):
 
         # Add header if file is new or doesn't have a header
         if not file_exists or os.stat(args.accuracies_file).st_size == 0:
-            writer.writerow(['Client ID', 'Best Local Accuracy', 'Best Local Accuracy Top-5', 'Best Global Accuracy', 'Best Global Accuracy Top-5', 'Best Global Model Train', 'Best Global Model Test', 'Best Global Model Train', 'Best Global Model Test', 'Hyperparameters'])
+            writer.writerow(['Client ID', 'Best Local Accuracy', 'Best Local Accuracy Top-5', 'Best Global Accuracy', 'Best Global Accuracy Top-5', 'Best Global Model Train', 'Best Global Model Test', 'Best Global Model Train', 'Best Global Model Test Top-5', 'Hyperparameters'])
             has_header = True
 
         # Write data rows
