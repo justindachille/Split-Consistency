@@ -32,7 +32,8 @@ def record_net_data_stats(y_train, net_dataidx_map, logdir, logger):
         data_list.append(n_total)
     print('mean:', np.mean(data_list))
     print('std:', np.std(data_list))
-    logger.info('Data statistics: %s' % str(net_cls_counts))
+    if logger is not None:
+        logger.info('Data statistics: %s' % str(net_cls_counts))
 
     return net_cls_counts
 
@@ -113,12 +114,12 @@ def load_feature_shift(args):
 
     train_ds_global = torch.utils.data.ConcatDataset(all_train_ds)
 
-    train_dl_global = data.DataLoader(dataset=train_ds_global, batch_size=args.batch_size, num_workers=8, shuffle=True, 
+    train_dl_global = data.DataLoader(dataset=train_ds_global, batch_size=args.batch_size, num_workers=args.n_train_workers, shuffle=True, 
                              pin_memory=True, persistent_workers=True
                              )
 
     test_ds_global = dl_obj(f"{args.datadir}/{args.dataset}/test", transform=transform_test)
-    test_dl = data.DataLoader(dataset=test_ds_global, batch_size=args.batch_size, num_workers=4, shuffle=False, 
+    test_dl = data.DataLoader(dataset=test_ds_global, batch_size=args.batch_size, num_workers=args.n_test_workers, shuffle=False, 
                              pin_memory=True, persistent_workers=True
                              )
     
@@ -443,7 +444,7 @@ def get_stratified_test_split(y_test, unique_labels, label_prop_percentages):
             test_stratified_idxs.extend(np.random.choice(label_idxs, size=label_test_count, replace=False))
     return test_stratified_idxs
 
-def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=None, X_test=None, y_test=None, dataidxs=None, noise_level=0, partition=False):
+def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_train=None, X_test=None, y_test=None, dataidxs=None, noise_level=0, partition=False):
 
     test_dl_local = None
     
@@ -496,14 +497,14 @@ def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=No
         
         train_ds = DatasetSplit(train_ds, dataidxs)
 
-        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=8, drop_last=True, shuffle=True, pin_memory=True, persistent_workers =True, worker_init_fn=set_worker_sharing_strategy)
-        test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=8, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=True, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+        test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         
         if partition == 'subsample' and dataidxs is not None:
             unique_labels, counts, label_prop_percentages = get_label_proportions(y_train, dataidxs)
             test_stratified_idxs = get_stratified_test_split(y_test, unique_labels, label_prop_percentages)
             test_ds_local = DatasetSplit(test_ds, test_stratified_idxs)
-            test_dl_local = data.DataLoader(dataset=test_ds_local, batch_size=test_bs, num_workers=8, shuffle=False, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+            test_dl_local = data.DataLoader(dataset=test_ds_local, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
 
             # Print test set indices/proportions
             unique_labels_test, counts_test = np.unique(np.array(y_test)[test_stratified_idxs], return_counts=True)
@@ -528,8 +529,8 @@ def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=No
         train_ds = dl_obj(datadir+'tiny-imagenet-200/train/', dataidxs=dataidxs, transform=transform_train)
         test_ds = dl_obj(datadir+'tiny-imagenet-200/val_again/', transform=transform_test)
 
-        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=8, drop_last=True, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
-        test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=8, shuffle=False, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=True, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+        test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         
         
     elif ds_name == 'imbd':
@@ -541,7 +542,7 @@ def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=No
 
         train_dl = torch.utils.data.DataLoader(dataset=train_ds, 
                                    batch_size=train_bs, 
-                                   num_workers=8, 
+                                   num_workers=args.n_train_workers, 
                                    drop_last=True, 
                                    shuffle=True, 
                                    pin_memory=True, 
@@ -549,7 +550,7 @@ def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=No
 
         test_dl = torch.utils.data.DataLoader(dataset=test_ds, 
                                    batch_size=test_bs, 
-                                   num_workers=8, 
+                                   num_workers=args.n_test_workers, 
                                    drop_last=True, 
                                    shuffle=False, worker_init_fn=set_worker_sharing_strategy)        
 
@@ -577,8 +578,8 @@ def get_dataloader(ds_name, datadir, train_bs, test_bs, X_train=None, y_train=No
         train_ds = DatasetSplit(train_ds, dataidxs)
                 
 
-        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=8, drop_last=True, shuffle=True, pin_memory=True, persistent_workers =True, worker_init_fn=set_worker_sharing_strategy)
-        test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=8, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=True, shuffle=True, pin_memory=True, persistent_workers =True, worker_init_fn=set_worker_sharing_strategy)
+        test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         
 
     return train_dl, test_dl, train_ds, test_ds, test_dl_local

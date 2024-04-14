@@ -40,7 +40,6 @@ from algs.fine_tuning import fine_tune
 from utils.calculate_acc import compute_accuracy, compute_accuracy_split_model
 
 def print_split_parameter_settings(client_net, server_net, i):
-    print(i)
     if i > 0:
         return
     total_params = sum(p.numel() for p in client_net.parameters()) + sum(p.numel() for p in server_net.parameters())
@@ -65,6 +64,11 @@ def init_nets(n_parties, args, device, n_classes):
             global_server_model = AlexNetServer(args, n_classes)
         elif args.model == 'resnet-18':
             global_server_model = ResNet_18_server_side(ResidualBlock, args, num_classes=n_classes)
+        elif args.model == 'resnet-50':
+            global_server_model = ResNet_50_server_side(args, num_classes=n_classes)
+        elif args.model == 'vgg-16':
+            global_server_model = VGG16_server_side(args, num_classes=n_classes)
+            
     for net_i in range(n_parties):
         if args.model == 'resnet-50':
             if args.alg == 'sflv1':
@@ -74,13 +78,13 @@ def init_nets(n_parties, args, device, n_classes):
             elif args.alg == 'sflv2':
                 client_net = ResNet_50_client_side(args)
                 server_net = None
-                print_split_parameter_settings(client_net, server_net, net_i)
             else:
                 net = ResNet_50(args, n_classes)
         elif args.model == 'resnet-18':
             if args.alg == 'sflv1':
                 client_net = ResNet_18_client_side(ResidualBlock, args)
                 server_net = ResNet_18_server_side(ResidualBlock, args, num_classes=n_classes)
+                print_split_parameter_settings(client_net, server_net, net_i)
             elif args.alg == 'sflv2':
                 client_net = ResNet_18_client_side(ResidualBlock, args)
                 server_net = None
@@ -96,7 +100,6 @@ def init_nets(n_parties, args, device, n_classes):
             elif args.alg == 'sflv2':
                 client_net = VGG16_client_side(args)
                 server_net = None
-                print_split_parameter_settings(client_net, server_net, net_i)
             else:
                 net = VGG16(n_classes)
         if args.alg == 'sflv1':
@@ -228,7 +231,7 @@ def main(args):
         )
         
         n_classes = len(np.unique(y_train))
-        train_dl_global, test_dl, train_ds_global, test_ds_global, _ = get_dataloader(args.dataset,
+        train_dl_global, test_dl, train_ds_global, test_ds_global, _ = get_dataloader(args, args.dataset,
                                                                                    args.datadir,
                                                                                    args.batch_size,
                                                                                    args.batch_size,
@@ -238,7 +241,7 @@ def main(args):
         train_dl_local_list, test_dl_local_list = [],[]
         for i in range(args.n_parties):
             dataidxs = net_dataidx_map[i]
-            train_dl_local, _, _, _, test_dl_local = get_dataloader(args.dataset, 
+            train_dl_local, _, _, _, test_dl_local = get_dataloader(args, args.dataset, 
                                                                  args.datadir, 
                                                                  args.batch_size, 
                                                                  args.batch_size, 
@@ -341,7 +344,19 @@ def main(args):
         party_list_this_round = party_list_rounds[round]
 
         # Check if the global model is a tuple (for sflv1)
-        if args.alg == 'sflv1' or args.alg == 'sflv2':
+        if args.alg == 'sflv1':
+            global_client_model, global_server_model = global_model
+            global_client_model.eval()
+            for param in global_client_model.parameters():
+                param.requires_grad = False
+            global_client_w = global_client_model.state_dict()
+            global_server_w = global_server_model.state_dict()
+
+            nets_this_round = {k: nets[k] for k in party_list_this_round}
+            for net_id, (client_net, server_net) in nets_this_round.items():
+                client_net.load_state_dict(global_client_w)
+                server_net.load_state_dict(global_server_w)
+        elif args.alg == 'sflv2':
             global_client_model, _ = global_model
             global_client_model.eval()
             for param in global_client_model.parameters():
@@ -349,7 +364,7 @@ def main(args):
             global_client_w = global_client_model.state_dict()
 
             nets_this_round = {k: nets[k] for k in party_list_this_round}
-            for net_id, (client_net, server_net) in nets_this_round.items():
+            for net_id, (client_net, _) in nets_this_round.items():
                 client_net.load_state_dict(global_client_w)
         else:
             global_model.eval()
@@ -391,6 +406,10 @@ def main(args):
             train_dl_local, test_dl_local = train_dl_local_list[net_id], test_dl_local_list[net_id]
             logger.info(f"Training network {(str(net_id))} n_training: {len(train_dl_local.dataset)}")
 
+            if len(train_dl_local.dataset) == 0:
+                logger.info(f"Skipping training for network {net_id} due to no data")
+                continue
+                
             if args.alg == 'moon':
                 prev_models=[]
                 for i in range(len(old_nets_pool)):
@@ -473,9 +492,10 @@ def main(args):
             client_scheduler.step()
             server_scheduler.step()
 
+            global_model = (global_client_model, global_server_model)
+            
             global_model[0].to(device)
             global_model[1].to(device)
-            global_client_model, global_server_model = global_model
 
             train_acc, train_loss, train_acc_top5 = compute_accuracy_split_model(global_client_model, global_server_model, train_dl_global, device=device)
             test_acc, _, test_acc_top5 = compute_accuracy_split_model(global_client_model, global_server_model, test_dl, get_confusion_matrix=False, device=device)
@@ -507,7 +527,7 @@ def main(args):
             train_acc, train_loss, train_acc_top5 = compute_accuracy(global_model, train_dl_global, device=device)
             test_acc, _, test_acc_top5 = compute_accuracy(global_model, test_dl, get_confusion_matrix=False, device=device)
             global_model.to('cpu')
-        
+
         logger.info(f'>> Global Model Train accuracy: {train_acc:.4f}, Train accuracy top-5: {train_acc_top5:.4f}')
         logger.info(f'>> Global Model Test accuracy: {test_acc:.4f}, Test accuracy top-5: {test_acc_top5:.4f}')
         logger.info(f'>> Global Model Train loss: {train_loss:.4f}')
@@ -686,16 +706,17 @@ def run_experiment(seed, alpha, dataset, args):
             writer = csv.DictWriter(file, fieldnames=['Client ID', 'Best Local Accuracy', 'Best Local Accuracy Top-5', 'Best Global Accuracy', 'Best Global Accuracy Top-5', 'Best Global Model Train', 'Best Global Model Test', 'Best Global Model Train', 'Best Global Model Test', 'Hyperparameters'])
             writer.writeheader()
 
-    experiment_exists = False
-    with open(args.accuracies_file, 'r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            
-            saved_hyperparams = eval(row['Hyperparameters'])
-            exclude_keys = ['log_file_name', 'device']
-            if all(saved_hyperparams.get(k) == v for k, v in hyperparams.items() if k not in exclude_keys):
-                print(f"Skipping experiment with hyperparameters: {hyperparams}")
-                return
+    if not args.dont_skip:
+        experiment_exists = False
+        with open(args.accuracies_file, 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+
+                saved_hyperparams = eval(row['Hyperparameters'])
+                exclude_keys = ['log_file_name', 'device']
+                if all(saved_hyperparams.get(k) == v for k, v in hyperparams.items() if k not in exclude_keys):
+                    print(f"Skipping experiment with hyperparameters: {hyperparams}")
+                    return
 
     if not experiment_exists:
         print(f'Running experiment on dataset {args_copy.dataset} with seed {args_copy.seed} and dirich alpha {args_copy.alpha}')
@@ -751,6 +772,11 @@ if __name__ == "__main__":
     parser.add_argument('--device', type=str, default='cuda', help='The device to run the program (cuda/cpu)')
 
     parser.add_argument('--accuracies_file', type=str, default='logs/best_accuracies.csv', help='The file path to store the best accuracies')
+    
+    parser.add_argument('--dont_skip', action='store_true', help='Do not skip repetitious experiments')
+
+    parser.add_argument('--n_train_workers', type=int, default=8, help='number of workers in a distributed cluster')   
+    parser.add_argument('--n_test_workers', type=int, default=8, help='number of workers in a distributed cluster')   
     
     args = parser.parse_args()
     print(args.dataset)

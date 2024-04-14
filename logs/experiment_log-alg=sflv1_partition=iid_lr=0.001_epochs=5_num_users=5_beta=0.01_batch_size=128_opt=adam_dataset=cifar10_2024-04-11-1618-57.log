@@ -1,0 +1,142 @@
+04-11 16:18 INFO     cuda
+04-11 16:18 INFO     Command Line Arguments: 
+{
+    "epochs": 5,
+    "comm_round": 70,
+    "sample_fraction": 1.0,
+    "alpha": 0.01,
+    "dataset": "cifar10",
+    "datadir": "../data/",
+    "partition": "iid",
+    "alg": "sflv1",
+    "model": "resnet-18",
+    "split_layer": 2,
+    "n_parties": 5,
+    "lr": 0.001,
+    "mu": 1,
+    "std_coeff": 2.5,
+    "unif_coeff": 0.5,
+    "batch_size": 128,
+    "load_first_net": 1,
+    "pool_option": "FIFO",
+    "model_buffer_size": 1,
+    "optimizer": "adam",
+    "simp_width": 1,
+    "out_dim": 256,
+    "reg": 0.0005,
+    "temperature": 0.5,
+    "logdir": "./",
+    "log_file_name": "logs/experiment_log-alg=sflv1_partition=iid_lr=0.001_epochs=5_num_users=5_beta=0.01_batch_size=128_opt=adam_dataset=cifar10_2024-04-11-1618-57",
+    "seed": 123,
+    "device": "cuda:6",
+    "accuracies_file": "logs/resnet_18_100_users.csv",
+    "dont_skip": false,
+    "multiprocessing": 0
+}
+04-11 16:18 INFO     Data statistics: {0: {0: 1036, 1: 971, 2: 979, 3: 1017, 4: 1046, 5: 993, 6: 970, 7: 950, 8: 1022, 9: 1016}, 1: {0: 944, 1: 1049, 2: 1037, 3: 989, 4: 975, 5: 960, 6: 1017, 7: 1014, 8: 1025, 9: 990}, 2: {0: 983, 1: 986, 2: 985, 3: 984, 4: 990, 5: 1040, 6: 994, 7: 1041, 8: 990, 9: 1007}, 3: {0: 1029, 1: 1012, 2: 963, 3: 1001, 4: 1000, 5: 1001, 6: 988, 7: 999, 8: 987, 9: 1020}, 4: {0: 1008, 1: 982, 2: 1036, 3: 1009, 4: 989, 5: 1006, 6: 1031, 7: 996, 8: 976, 9: 967}}
+04-11 16:19 INFO     in comm round:0
+04-11 16:19 INFO     Training network 0 n_training: 10000
+04-11 16:19 INFO     Training network 0
+04-11 16:19 INFO     Client: 0 Epoch: 0 Loss: 1.868437375777807
+04-11 16:19 INFO     Client: 0 Epoch: 1 Loss: 1.5869460274011662
+04-11 16:19 INFO     Client: 0 Epoch: 2 Loss: 1.4504882127810748
+04-11 16:19 INFO     Client: 0 Epoch: 3 Loss: 1.3139113585154216
+04-11 16:19 INFO     Client: 0 Epoch: 4 Loss: 1.2148367120669439
+04-11 16:19 INFO      ** Client: 0 Training complete **
+04-11 16:19 INFO     Training network 1 n_training: 10000
+04-11 16:19 INFO     Training network 1
+04-11 16:19 INFO     Client: 1 Epoch: 0 Loss: 1.904482094141153
+04-11 16:19 INFO     Client: 1 Epoch: 1 Loss: 1.6021903783847125
+04-11 16:19 INFO     Client: 1 Epoch: 2 Loss: 1.4661734379254854
+04-11 16:19 INFO     Client: 1 Epoch: 3 Loss: 1.3335348658072643
+04-11 16:19 INFO     Client: 1 Epoch: 4 Loss: 1.232372189179445
+04-11 16:19 INFO      ** Client: 1 Training complete **
+04-11 16:19 INFO     Training network 2 n_training: 10000
+04-11 16:19 INFO     Training network 2
+04-11 16:19 INFO     Client: 2 Epoch: 0 Loss: 1.825246343245873
+04-11 16:19 INFO     Client: 2 Epoch: 1 Loss: 1.527270829066252
+04-11 16:19 INFO     Client: 2 Epoch: 2 Loss: 1.3641266639416034
+04-11 16:20 INFO     Client: 2 Epoch: 3 Loss: 1.212058846767132
+04-11 16:20 INFO     Client: 2 Epoch: 4 Loss: 1.1094445846019647
+04-11 16:20 INFO      ** Client: 2 Training complete **
+04-11 16:20 INFO     Training network 3 n_training: 10000
+04-11 16:20 INFO     Training network 3
+04-11 16:20 INFO     Client: 3 Epoch: 0 Loss: 1.8496227463086445
+04-11 16:20 INFO     Client: 3 Epoch: 1 Loss: 1.5489444747949257
+04-11 16:20 INFO     Client: 3 Epoch: 2 Loss: 1.3935045829186072
+04-11 16:20 INFO     Client: 3 Epoch: 3 Loss: 1.2602223524680505
+04-11 16:20 INFO     Client: 3 Epoch: 4 Loss: 1.141581043218955
+04-11 16:20 INFO      ** Client: 3 Training complete **
+04-11 16:20 INFO     Training network 4 n_training: 10000
+04-11 16:20 INFO     Training network 4
+04-11 16:20 INFO     Client: 4 Epoch: 0 Loss: 1.9241361923706837
+04-11 16:20 INFO     Client: 4 Epoch: 1 Loss: 1.6088661566758766
+04-11 16:20 INFO     Client: 4 Epoch: 2 Loss: 1.4557465269015386
+04-11 16:20 INFO     Client: 4 Epoch: 3 Loss: 1.331571115897252
+04-11 16:20 INFO     Client: 4 Epoch: 4 Loss: 1.2042118601309948
+04-11 16:20 INFO      ** Client: 4 Training complete **
+04-11 16:20 INFO     global n_training: 390
+04-11 16:20 INFO     global n_test: 79
+04-11 16:20 INFO     >> Global Model Train accuracy: 0.1000, Train accuracy top-5: 0.5014
+04-11 16:20 INFO     >> Global Model Test accuracy: 0.1000, Test accuracy top-5: 0.5052
+04-11 16:20 INFO     >> Global Model Train loss: 2.3277
+04-11 16:20 INFO     in comm round:1
+04-11 16:20 INFO     Training network 0 n_training: 10000
+04-11 16:20 INFO     Training network 0
+04-11 16:20 INFO     Client: 0 Epoch: 0 Loss: 1.3474610906380873
+04-11 16:21 INFO     Client: 0 Epoch: 1 Loss: 1.1483860061718867
+04-11 16:21 INFO     Client: 0 Epoch: 2 Loss: 1.0712998348933
+04-11 16:21 INFO     Client: 0 Epoch: 3 Loss: 0.9868455850161039
+04-11 16:21 INFO     Client: 0 Epoch: 4 Loss: 0.9365253142821484
+04-11 16:21 INFO      ** Client: 0 Training complete **
+04-11 16:21 INFO     Training network 1 n_training: 10000
+04-11 16:21 INFO     Training network 1
+04-11 16:21 INFO     Client: 1 Epoch: 0 Loss: 1.3215514100514925
+04-11 16:21 INFO     Client: 1 Epoch: 1 Loss: 1.1521310240794451
+04-11 16:21 INFO     Client: 1 Epoch: 2 Loss: 1.0728958424849389
+04-11 16:21 INFO     Client: 1 Epoch: 3 Loss: 1.004218266560481
+04-11 16:21 INFO     Client: 1 Epoch: 4 Loss: 0.9480304886133243
+04-11 16:21 INFO      ** Client: 1 Training complete **
+04-11 16:21 INFO     Training network 2 n_training: 10000
+04-11 16:21 INFO     Training network 2
+04-11 16:21 INFO     Client: 2 Epoch: 0 Loss: 1.293795028558144
+04-11 16:21 INFO     Client: 2 Epoch: 1 Loss: 1.1225522680160327
+04-11 16:21 INFO     Client: 2 Epoch: 2 Loss: 1.0344269375006359
+04-11 16:21 INFO     Client: 2 Epoch: 3 Loss: 0.9768709387534704
+04-11 16:21 INFO     Client: 2 Epoch: 4 Loss: 0.8988652206384219
+04-11 16:21 INFO      ** Client: 2 Training complete **
+04-11 16:21 INFO     Training network 3 n_training: 10000
+04-11 16:21 INFO     Training network 3
+04-11 16:21 INFO     Client: 3 Epoch: 0 Loss: 1.3996077852371411
+04-11 16:21 INFO     Client: 3 Epoch: 1 Loss: 1.1509494391771464
+04-11 16:22 INFO     Client: 3 Epoch: 2 Loss: 1.0507422716189654
+04-11 16:22 INFO     Client: 3 Epoch: 3 Loss: 0.9841161148670392
+04-11 16:22 INFO     Client: 3 Epoch: 4 Loss: 0.931033085554074
+04-11 16:22 INFO      ** Client: 3 Training complete **
+04-11 16:22 INFO     Training network 4 n_training: 10000
+04-11 16:22 INFO     Training network 4
+04-11 16:22 INFO     Client: 4 Epoch: 0 Loss: 1.3792538245519002
+04-11 16:22 INFO     Client: 4 Epoch: 1 Loss: 1.1771568059921265
+04-11 16:22 INFO     Client: 4 Epoch: 2 Loss: 1.0627716642159681
+04-11 16:22 INFO     Client: 4 Epoch: 3 Loss: 1.0142824336504326
+04-11 16:22 INFO     Client: 4 Epoch: 4 Loss: 0.9579776235115833
+04-11 16:22 INFO      ** Client: 4 Training complete **
+04-11 16:22 INFO     global n_training: 390
+04-11 16:22 INFO     global n_test: 79
+04-11 16:22 INFO     >> Global Model Train accuracy: 0.1000, Train accuracy top-5: 0.5000
+04-11 16:22 INFO     >> Global Model Test accuracy: 0.1006, Test accuracy top-5: 0.5000
+04-11 16:22 INFO     >> Global Model Train loss: 2.3092
+04-11 16:22 INFO     in comm round:2
+04-11 16:22 INFO     Training network 0 n_training: 10000
+04-11 16:22 INFO     Training network 0
+04-11 16:22 INFO     Client: 0 Epoch: 0 Loss: 1.017203457080401
+04-11 16:22 INFO     Client: 0 Epoch: 1 Loss: 0.892745859347857
+04-11 16:22 INFO     Client: 0 Epoch: 2 Loss: 0.8388749796610612
+04-11 16:22 INFO     Client: 0 Epoch: 3 Loss: 0.7836889166098374
+04-11 16:22 INFO     Client: 0 Epoch: 4 Loss: 0.7431701291830112
+04-11 16:22 INFO      ** Client: 0 Training complete **
+04-11 16:22 INFO     Training network 1 n_training: 10000
+04-11 16:22 INFO     Training network 1
+04-11 16:22 INFO     Client: 1 Epoch: 0 Loss: 1.0134612039113655
+04-11 16:23 INFO     Client: 1 Epoch: 1 Loss: 0.8973332834549439
+04-11 16:23 INFO     Client: 1 Epoch: 2 Loss: 0.8413907266580142
