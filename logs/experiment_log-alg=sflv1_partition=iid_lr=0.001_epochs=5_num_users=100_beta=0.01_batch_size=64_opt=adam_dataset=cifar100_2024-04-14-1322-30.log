@@ -13735,3 +13735,196 @@
 04-14 14:03 INFO      ** Client: 99 Training complete **
 04-14 14:03 INFO     global n_training: 781
 04-14 14:03 INFO     global n_test: 157
+04-14 14:03 INFO     >> Global Model Train accuracy: 0.0510, Train accuracy top-5: 0.2020
+04-14 14:03 INFO     >> Global Model Test accuracy: 0.0583, Test accuracy top-5: 0.2257
+04-14 14:03 INFO     >> Global Model Train loss: 4.1667
+04-14 14:03 INFO     in comm round:17
+04-14 14:03 INFO     Training network 0 n_training: 500
+04-14 14:03 INFO     Training network 0
+04-14 14:03 INFO     Client: 0 Epoch: 0 Loss: 4.013021094458444
+04-14 14:03 INFO     Client: 0 Epoch: 1 Loss: 3.8375636509486606
+04-14 14:03 INFO     Client: 0 Epoch: 2 Loss: 3.61558427129473
+04-14 14:03 INFO     Client: 0 Epoch: 3 Loss: 3.5596238545009067
+04-14 14:03 INFO     Client: 0 Epoch: 4 Loss: 3.511315720421927
+04-14 14:03 INFO      ** Client: 0 Training complete **
+04-14 14:03 INFO     Training network 1 n_training: 500
+04-14 14:03 INFO     Training network 1
+04-14 14:03 INFO     Client: 1 Epoch: 0 Loss: 4.164505345480783
+04-14 14:03 INFO     Client: 1 Epoch: 1 Loss: 3.885710988725935
+04-14 14:03 INFO     Client: 1 Epoch: 2 Loss: 3.7713476589747836
+04-14 14:03 INFO     Client: 1 Epoch: 3 Loss: 3.717888968331473
+04-14 14:03 INFO     Client: 1 Epoch: 4 Loss: 3.594721964427403
+04-14 14:03 INFO      ** Client: 1 Training complete **
+04-14 14:03 INFO     Training network 2 n_training: 500
+04-14 14:03 INFO     Training network 2
+04-14 14:03 INFO     Client: 2 Epoch: 0 Loss: 4.1305089337485175
+04-14 14:03 INFO     Client: 2 Epoch: 1 Loss: 3.9688589913504466
+04-14 14:03 INFO     Client: 2 Epoch: 2 Loss: 3.7240379878452847
+04-14 14:03 INFO     Client: 2 Epoch: 3 Loss: 3.6517391886029924
+04-14 14:03 INFO     Client: 2 Epoch: 4 Loss: 3.573685714176723
+04-14 14:03 INFO      ** Client: 2 Training complete **
+04-14 14:03 INFO     Training network 3 n_training: 500
+04-14 14:03 INFO     Training network 3
+04-14 14:03 INFO     Client: 3 Epoch: 0 Loss: 4.130974497113909
+04-14 14:03 INFO     Client: 3 Epoch: 1 Loss: 3.918278932571411
+04-14 14:03 INFO     Client: 3 Epoch: 2 Loss: 3.7600343567984447
+04-14 14:03 INFO     Client: 3 Epoch: 3 Loss: 3.734820876802717
+04-14 14:03 INFO     Client: 3 Epoch: 4 Loss: 3.586976630347116
+04-14 14:03 INFO      ** Client: 3 Training complete **
+04-14 14:03 INFO     Training network 4 n_training: 500
+04-14 14:03 INFO     Training network 4
+04-14 14:03 INFO     Client: 4 Epoch: 0 Loss: 4.192652668271746
+04-14 14:03 INFO     Client: 4 Epoch: 1 Loss: 4.034799201147897
+04-14 14:03 INFO     Client: 4 Epoch: 2 Loss: 3.8729419708251953
+04-14 14:03 INFO     Client: 4 Epoch: 3 Loss: 3.7755184854779924
+04-14 14:03 INFO     Client: 4 Epoch: 4 Loss: 3.710160187312535
+04-14 14:04 INFO      ** Client: 4 Training complete **
+04-14 14:04 INFO     Training network 5 n_training: 500
+04-14 14:04 INFO     Training network 5
+04-14 14:04 INFO     Client: 5 Epoch: 0 Loss: 4.1404037816183905
+04-14 14:04 INFO     Client: 5 Epoch: 1 Loss: 3.87614073072161
+04-14 14:04 INFO     Client: 5 Epoch: 2 Loss: 3.788463524409703
+04-14 14:04 INFO     Client: 5 Epoch: 3 Loss: 3.6772116252354214
+04-14 14:04 INFO     Client: 5 Epoch: 4 Loss: 3.595959050314767
+04-14 14:04 INFO      ** Client: 5 Training complete **
+04-14 14:04 INFO     Training network 6 n_training: 500
+04-14 14:04 INFO     Training network 6
+04-14 14:04 INFO     Client: 6 Epoch: 0 Loss: 4.146599633353097
+04-14 14:04 INFO     Client: 6 Epoch: 1 Loss: 3.958166939871652
+04-14 14:04 INFO     Client: 6 Epoch: 2 Loss: 3.827617713383266
+04-14 14:04 INFO     Client: 6 Epoch: 3 Loss: 3.7281718254089355
+04-14 14:04 INFO     Client: 6 Epoch: 4 Loss: 3.669243029185704
+04-14 14:04 INFO      ** Client: 6 Training complete **
+04-14 14:04 INFO     Training network 7 n_training: 500
+04-14 14:04 INFO     Training network 7
+04-14 14:04 INFO     Client: 7 Epoch: 0 Loss: 4.164376871926444
+04-14 14:04 INFO     Client: 7 Epoch: 1 Loss: 3.934282030378069
+04-14 14:04 INFO     Client: 7 Epoch: 2 Loss: 3.7723587581089566
+04-14 14:04 INFO     Client: 7 Epoch: 3 Loss: 3.768717425210135
+04-14 14:04 INFO     Client: 7 Epoch: 4 Loss: 3.725480794906616
+04-14 14:04 INFO      ** Client: 7 Training complete **
+04-14 14:04 INFO     Training network 8 n_training: 500
+04-14 14:04 INFO     Training network 8
+04-14 14:04 INFO     Client: 8 Epoch: 0 Loss: 4.162144252232143
+04-14 14:04 INFO     Client: 8 Epoch: 1 Loss: 3.9648100308009555
+04-14 14:04 INFO     Client: 8 Epoch: 2 Loss: 3.871637616838728
+04-14 14:04 INFO     Client: 8 Epoch: 3 Loss: 3.7796119281223843
+04-14 14:04 INFO     Client: 8 Epoch: 4 Loss: 3.6844119344438826
+04-14 14:04 INFO      ** Client: 8 Training complete **
+04-14 14:04 INFO     Training network 9 n_training: 500
+04-14 14:04 INFO     Training network 9
+04-14 14:04 INFO     Client: 9 Epoch: 0 Loss: 4.2221018586839945
+04-14 14:04 INFO     Client: 9 Epoch: 1 Loss: 4.018133231571743
+04-14 14:04 INFO     Client: 9 Epoch: 2 Loss: 3.9224308218274797
+04-14 14:04 INFO     Client: 9 Epoch: 3 Loss: 3.783907175064087
+04-14 14:04 INFO     Client: 9 Epoch: 4 Loss: 3.714803014482771
+04-14 14:04 INFO      ** Client: 9 Training complete **
+04-14 14:04 INFO     Training network 10 n_training: 500
+04-14 14:04 INFO     Training network 10
+04-14 14:04 INFO     Client: 10 Epoch: 0 Loss: 4.151043823787144
+04-14 14:04 INFO     Client: 10 Epoch: 1 Loss: 4.060618298394339
+04-14 14:04 INFO     Client: 10 Epoch: 2 Loss: 3.9316427367074147
+04-14 14:04 INFO     Client: 10 Epoch: 3 Loss: 3.739696196147374
+04-14 14:04 INFO     Client: 10 Epoch: 4 Loss: 3.6895395687648227
+04-14 14:04 INFO      ** Client: 10 Training complete **
+04-14 14:04 INFO     Training network 11 n_training: 500
+04-14 14:04 INFO     Training network 11
+04-14 14:04 INFO     Client: 11 Epoch: 0 Loss: 4.211024693080357
+04-14 14:04 INFO     Client: 11 Epoch: 1 Loss: 3.9479285648890903
+04-14 14:04 INFO     Client: 11 Epoch: 2 Loss: 3.8577945913587297
+04-14 14:04 INFO     Client: 11 Epoch: 3 Loss: 3.7885043621063232
+04-14 14:04 INFO     Client: 11 Epoch: 4 Loss: 3.6981751578194753
+04-14 14:04 INFO      ** Client: 11 Training complete **
+04-14 14:04 INFO     Training network 12 n_training: 500
+04-14 14:04 INFO     Training network 12
+04-14 14:04 INFO     Client: 12 Epoch: 0 Loss: 4.12510255404881
+04-14 14:04 INFO     Client: 12 Epoch: 1 Loss: 3.8591555186680386
+04-14 14:04 INFO     Client: 12 Epoch: 2 Loss: 3.7809265681675504
+04-14 14:04 INFO     Client: 12 Epoch: 3 Loss: 3.7319590023585727
+04-14 14:04 INFO     Client: 12 Epoch: 4 Loss: 3.5891452516828264
+04-14 14:04 INFO      ** Client: 12 Training complete **
+04-14 14:04 INFO     Training network 13 n_training: 500
+04-14 14:04 INFO     Training network 13
+04-14 14:04 INFO     Client: 13 Epoch: 0 Loss: 4.220678091049194
+04-14 14:04 INFO     Client: 13 Epoch: 1 Loss: 4.023366894040789
+04-14 14:04 INFO     Client: 13 Epoch: 2 Loss: 3.7559897559029713
+04-14 14:04 INFO     Client: 13 Epoch: 3 Loss: 3.913254601614816
+04-14 14:04 INFO     Client: 13 Epoch: 4 Loss: 3.8080008711133684
+04-14 14:04 INFO      ** Client: 13 Training complete **
+04-14 14:04 INFO     Training network 14 n_training: 500
+04-14 14:04 INFO     Training network 14
+04-14 14:04 INFO     Client: 14 Epoch: 0 Loss: 4.176011289869036
+04-14 14:04 INFO     Client: 14 Epoch: 1 Loss: 3.9668073313576833
+04-14 14:04 INFO     Client: 14 Epoch: 2 Loss: 3.8392056056431363
+04-14 14:04 INFO     Client: 14 Epoch: 3 Loss: 3.7500222069876537
+04-14 14:04 INFO     Client: 14 Epoch: 4 Loss: 3.729969024658203
+04-14 14:04 INFO      ** Client: 14 Training complete **
+04-14 14:04 INFO     Training network 15 n_training: 500
+04-14 14:04 INFO     Training network 15
+04-14 14:04 INFO     Client: 15 Epoch: 0 Loss: 4.133535487311227
+04-14 14:04 INFO     Client: 15 Epoch: 1 Loss: 3.801313672746931
+04-14 14:04 INFO     Client: 15 Epoch: 2 Loss: 3.813427891050066
+04-14 14:04 INFO     Client: 15 Epoch: 3 Loss: 3.690547023500715
+04-14 14:04 INFO     Client: 15 Epoch: 4 Loss: 3.578446422304426
+04-14 14:04 INFO      ** Client: 15 Training complete **
+04-14 14:04 INFO     Training network 16 n_training: 500
+04-14 14:04 INFO     Training network 16
+04-14 14:04 INFO     Client: 16 Epoch: 0 Loss: 4.172085353306362
+04-14 14:04 INFO     Client: 16 Epoch: 1 Loss: 3.926682335989816
+04-14 14:04 INFO     Client: 16 Epoch: 2 Loss: 3.8311778136662076
+04-14 14:04 INFO     Client: 16 Epoch: 3 Loss: 3.733560425894601
+04-14 14:04 INFO     Client: 16 Epoch: 4 Loss: 3.6168581758226668
+04-14 14:04 INFO      ** Client: 16 Training complete **
+04-14 14:04 INFO     Training network 17 n_training: 500
+04-14 14:04 INFO     Training network 17
+04-14 14:04 INFO     Client: 17 Epoch: 0 Loss: 4.182236296789987
+04-14 14:04 INFO     Client: 17 Epoch: 1 Loss: 4.072070292064121
+04-14 14:04 INFO     Client: 17 Epoch: 2 Loss: 3.9343224934169223
+04-14 14:04 INFO     Client: 17 Epoch: 3 Loss: 3.8248747076307024
+04-14 14:04 INFO     Client: 17 Epoch: 4 Loss: 3.7638093744005476
+04-14 14:04 INFO      ** Client: 17 Training complete **
+04-14 14:04 INFO     Training network 18 n_training: 500
+04-14 14:04 INFO     Training network 18
+04-14 14:04 INFO     Client: 18 Epoch: 0 Loss: 4.243449040821621
+04-14 14:04 INFO     Client: 18 Epoch: 1 Loss: 3.9328859192984447
+04-14 14:04 INFO     Client: 18 Epoch: 2 Loss: 3.82776369367327
+04-14 14:04 INFO     Client: 18 Epoch: 3 Loss: 3.7377998488289967
+04-14 14:04 INFO     Client: 18 Epoch: 4 Loss: 3.7532733508518765
+04-14 14:04 INFO      ** Client: 18 Training complete **
+04-14 14:04 INFO     Training network 19 n_training: 500
+04-14 14:04 INFO     Training network 19
+04-14 14:04 INFO     Client: 19 Epoch: 0 Loss: 4.210173606872559
+04-14 14:04 INFO     Client: 19 Epoch: 1 Loss: 3.906776257923671
+04-14 14:04 INFO     Client: 19 Epoch: 2 Loss: 3.906476770128523
+04-14 14:04 INFO     Client: 19 Epoch: 3 Loss: 3.6911100319453647
+04-14 14:04 INFO     Client: 19 Epoch: 4 Loss: 3.623475824083601
+04-14 14:04 INFO      ** Client: 19 Training complete **
+04-14 14:04 INFO     Training network 20 n_training: 500
+04-14 14:04 INFO     Training network 20
+04-14 14:04 INFO     Client: 20 Epoch: 0 Loss: 4.135913848876953
+04-14 14:04 INFO     Client: 20 Epoch: 1 Loss: 3.8662075655800954
+04-14 14:04 INFO     Client: 20 Epoch: 2 Loss: 3.757472446986607
+04-14 14:04 INFO     Client: 20 Epoch: 3 Loss: 3.6493447848728726
+04-14 14:04 INFO     Client: 20 Epoch: 4 Loss: 3.6261258125305176
+04-14 14:04 INFO      ** Client: 20 Training complete **
+04-14 14:04 INFO     Training network 21 n_training: 500
+04-14 14:04 INFO     Training network 21
+04-14 14:04 INFO     Client: 21 Epoch: 0 Loss: 4.161373444965908
+04-14 14:04 INFO     Client: 21 Epoch: 1 Loss: 3.9728806359427318
+04-14 14:04 INFO     Client: 21 Epoch: 2 Loss: 3.7863352639334544
+04-14 14:04 INFO     Client: 21 Epoch: 3 Loss: 3.697718450001308
+04-14 14:04 INFO     Client: 21 Epoch: 4 Loss: 3.74525625365121
+04-14 14:04 INFO      ** Client: 21 Training complete **
+04-14 14:04 INFO     Training network 22 n_training: 500
+04-14 14:04 INFO     Training network 22
+04-14 14:04 INFO     Client: 22 Epoch: 0 Loss: 4.1330510548182895
+04-14 14:04 INFO     Client: 22 Epoch: 1 Loss: 3.921349116734096
+04-14 14:04 INFO     Client: 22 Epoch: 2 Loss: 3.7840472289494107
+04-14 14:04 INFO     Client: 22 Epoch: 3 Loss: 3.72491386958531
+04-14 14:04 INFO     Client: 22 Epoch: 4 Loss: 3.6263344969068254
+04-14 14:04 INFO      ** Client: 22 Training complete **
+04-14 14:04 INFO     Training network 23 n_training: 500
+04-14 14:04 INFO     Training network 23
+04-14 14:04 INFO     Client: 23 Epoch: 0 Loss: 4.149656295776367
+04-14 14:04 INFO     Client: 23 Epoch: 1 Loss: 3.9595995289938792
+04-14 14:04 INFO     Client: 23 Epoch: 2 Loss: 3.7977144377572194
