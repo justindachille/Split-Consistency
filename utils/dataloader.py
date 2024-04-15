@@ -1,7 +1,7 @@
 import torch.utils.data as data
 from torch.utils.data import DataLoader, Dataset, Subset
 
-from torchvision.datasets import STL10, CIFAR10, CIFAR100, ImageFolder, DatasetFolder, utils
+from torchvision.datasets import STL10, CIFAR10, CIFAR100, FashionMNIST, ImageFolder, DatasetFolder, utils
 import torchvision.transforms as transforms
 import numpy as np
 import torch
@@ -85,6 +85,21 @@ def load_cifar100_data(args, datadir):
 
     return (X_train, y_train, X_test, y_test)
 
+def load_fashionmnist_data(args, datadir):
+    transform = transforms.Compose([transforms.ToTensor()])
+
+    fashionmnist_train_ds = FashionMNIST(datadir, train=True, download=True, transform=transform)
+    fashionmnist_test_ds = FashionMNIST(datadir, train=False, download=True, transform=transform)
+
+    X_train, y_train = fashionmnist_train_ds.data, fashionmnist_train_ds.targets
+    X_test, y_test = fashionmnist_test_ds.data, fashionmnist_test_ds.targets
+
+    X_train = X_train.numpy()
+    X_test = X_test.numpy()
+    y_train = y_train.numpy()
+    y_test = y_test.numpy()
+
+    return X_train, y_train, X_test, y_test
 
 def load_tinyimagenet_data(args, datadir):
     transform = transforms.Compose([transforms.ToTensor()])
@@ -135,9 +150,11 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
         X_train, y_train, X_test, y_test = load_cifar100_data(args, datadir)
     elif dataset == 'tinyimagenet':
         X_train, y_train, X_test, y_test = load_tinyimagenet_data(args, datadir)
+    elif dataset == 'fashionmnist':
+        X_train, y_train, X_test, y_test = load_fashionmnist_data(args, datadir)
     elif dataset == 'ham10000':
-        return Ham10000().preprocess_data()
-
+        X_train, y_train, X_test, y_test = load_ham10000_data(args, datadir)
+        
     n_train = y_train.shape[0]
 
     if partition == "homo" or partition == "iid":
@@ -154,6 +171,8 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
         elif dataset == 'tinyimagenet':
             K = 200
             # min_require_size = 100
+        elif dataset == 'ham10000':
+            K = 7
 
         N = y_train.shape[0]
         net_dataidx_map = {}
@@ -247,17 +266,16 @@ def dataset_non_iid(dataset, num_users, beta=0.5, dirichlet_dist_to_use=None, su
 
     return dict_users, dirichlet_dist
 
-class Ham10000:
-    def __init__(self):
+class HAM10000:
+    def __init__(self, datadir):
+        self.datadir = datadir
         self.df, self.df_test = self.load_data()
         self.print_data_info()
-        self.train = self.df
-        self.dataset_train, self.dataset_test, _, _, _ = self.preprocess_data()   
+        self.train_data, self.train_labels, self.test_data, self.test_labels = self.preprocess_data()
 
     def load_data(self):
-        df = pd.read_csv('data/HAM10000_metadata.csv')
-        df_test = pd.read_csv('data/ISIC2018_Task3_Test_GroundTruth.csv')
-
+        df = pd.read_csv(os.path.join(self.datadir, 'HAM10000_metadata.csv'))
+        df_test = pd.read_csv(os.path.join(self.datadir, 'ISIC2018_Task3_Test_GroundTruth.csv'))
         lesion_type = {
             'nv': 'Melanocytic nevi',
             'mel': 'Melanoma',
@@ -269,12 +287,12 @@ class Ham10000:
         }
 
         def add_images(df):
-            imageid_path = {os.path.splitext(os.path.basename(x))[0]: x for x in glob(os.path.join("data", '*', '*.jpg'))}
+            imageid_path = {os.path.splitext(os.path.basename(x))[0]: x for x in glob(os.path.join(self.datadir, '*', '*.jpg'))}
             df['path'] = df['image_id'].map(imageid_path.get)
             df['cell_type'] = df['dx'].map(lesion_type.get)
             df['target'] = pd.Categorical(df['cell_type']).codes
             return df
-        
+
         df = add_images(df)
         df_test = add_images(df_test)
 
@@ -285,56 +303,32 @@ class Ham10000:
         print(self.df['target'].value_counts())
 
     def preprocess_data(self):
-        mean = [0.485, 0.456, 0.406]
-        std = [0.229, 0.224, 0.225]
+        train_data = []
+        train_labels = []
+        test_data = []
+        test_labels = []
 
-        train_transforms = transforms.Compose([transforms.RandomHorizontalFlip(), 
-                                               transforms.RandomVerticalFlip(),
-                                               transforms.Pad(3),
-                                               transforms.RandomRotation(10),
-                                               transforms.CenterCrop(64),
-                                               transforms.ToTensor(), 
-                                               transforms.Normalize(mean=mean, std=std)])
+        for _, row in self.df.iterrows():
+            img_path = row['path']
+            label = row['target']
+            img = Image.open(img_path).resize((64, 64))
+            train_data.append(img)
+            train_labels.append(label)
 
-        test_transforms = transforms.Compose([
-                            transforms.Pad(3),
-                            transforms.CenterCrop(64),
-                            transforms.ToTensor(),
-                            transforms.Normalize(mean=mean, std=std)])
-        
-        dataset_train = SkinData(self.train, transform=train_transforms)
-        dataset_test = SkinData(self.df_test, transform=test_transforms)
+        for _, row in self.df_test.iterrows():
+            img_path = row['path']
+            label = row['target']
+            img = Image.open(img_path).resize((64, 64))
+            test_data.append(img)
+            test_labels.append(label)
 
-        def create_client_dataloaders(dataset, batch_size=32):
-            # Determine the number of samples for each client
-            num_samples_client1 = np.random.choice([4000, 6000])
-            num_samples_client2 = np.random.choice([4000, 6000])
+        return train_data, train_labels, test_data, test_labels
 
-            # Generate random indices for sampling
-            indices = torch.randperm(len(dataset)).tolist()
-
-            # Split indices for each client
-            client1_indices = indices[:num_samples_client1]
-            client2_indices = indices[num_samples_client1:num_samples_client1 + num_samples_client2]
-
-            # Create subsets for each client
-            client1_dataset = Subset(dataset, client1_indices)
-            client2_dataset = Subset(dataset, client2_indices)
-
-            # Create dataloaders for each client
-            client1_loader = DataLoader(client1_dataset, batch_size=batch_size, shuffle=True)
-            client2_loader = DataLoader(client2_dataset, batch_size=batch_size, shuffle=True)
-
-            return client1_loader, client1_indices, client2_loader, client2_indices
-        client1_loader, client1_indices, client2_loader, client2_indices = create_client_dataloaders(dataset_train)
-
-        net_dataidx_map = {
-            0: client1_indices,
-            1: client2_indices
-        }
-
-        return dataset_train, dataset_test, client1_loader, client2_loader, net_dataidx_map
-
+def load_ham10000_data(args, datadir):
+    ham10000 = HAM10000(datadir)
+    X_train, y_train = ham10000.train_data, ham10000.train_labels
+    X_test, y_test = ham10000.test_data, ham10000.test_labels
+    return (X_train, y_train, X_test, y_test)
 
 class ImageFolder_custom(DatasetFolder):
     def __init__(self, root, dataidxs=None, train=True, transform=None, target_transform=None):
@@ -384,10 +378,16 @@ class CustomDataset(Dataset):
         return self.targets.shape[0]
 
     def __getitem__(self, index):
-        if self.transforms is not None:
-            batch_x, batch_y = self.transforms(self.data[index]), self.targets[index]
+        if isinstance(self.data[index], tuple):
+            path, target = self.data[index]
+            batch_x = Image.open(path).resize((64, 64))
         else:
-            batch_x, batch_y = self.data[index], self.targets[index]
+            batch_x = self.data[index]
+
+        batch_y = self.targets[index]
+
+        if self.transforms is not None:
+            batch_x = self.transforms(batch_x)
 
         return batch_x, batch_y
     
@@ -555,6 +555,28 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
                                    shuffle=False, worker_init_fn=set_worker_sharing_strategy)        
 
         
+    elif ds_name == 'fashionmnist':
+        dataset = FashionMNIST
+        normalize = transforms.Normalize(mean=[0.2860], std=[0.3530])
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.RandomCrop(28, padding=4),
+            transforms.RandomHorizontalFlip(),
+            normalize
+        ])
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            normalize
+        ])
+
+        train_ds = CustomDataset(X_train, y_train, transforms=transform_train)
+        test_ds = CustomDataset(X_test, y_test, transforms=transform_test)
+
+        train_ds = DatasetSplit(train_ds, dataidxs)
+
+        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=True, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+        test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+    
     elif ds_name == 'stl10':
         
         normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5],
@@ -581,6 +603,30 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
         train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=False, shuffle=True, pin_memory=True, persistent_workers =True, worker_init_fn=set_worker_sharing_strategy)
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         
+    elif ds_name == 'ham10000':
+        transform_train = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.Pad(3),
+            transforms.RandomRotation(10),
+            transforms.CenterCrop(64),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        transform_test = transforms.Compose([
+            transforms.Pad(3),
+            transforms.CenterCrop(64),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+        train_ds = CustomDataset(X_train, y_train, transforms=transform_train)
+        test_ds = CustomDataset(X_test, y_test, transforms=transform_test)
+
+        train_ds = DatasetSplit(train_ds, dataidxs)
+
+        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=True, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+        test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
 
     return train_dl, test_dl, train_ds, test_ds, test_dl_local
 

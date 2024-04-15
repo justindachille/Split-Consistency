@@ -653,7 +653,8 @@ class VGG16(nn.Module):
         super(VGG16, self).__init__()
 
         # Conv blocks (BatchNorm + ReLU activation added in each block)
-        self.layer1 = vgg_conv_block([3,64], [64,64], [3,3], [1,1], 2, 2)
+        # Set to 1 for grayscale FMNIST currently
+        self.layer1 = vgg_conv_block([1,64], [64,64], [3,3], [1,1], 2, 2)
         self.layer2 = vgg_conv_block([64,128], [128,128], [3,3], [1,1], 2, 2)
         self.layer3 = vgg_conv_block([128,256,256], [256,256,256], [3,3,3], [1,1,1], 2, 2)
         self.layer4 = vgg_conv_block([256,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2)
@@ -684,7 +685,7 @@ class VGG16_client_side(nn.Module):
         self.layers = nn.ModuleList()
         assert 1 <= args.split_layer <= 5
 
-        self.layers.append(vgg_conv_block([3,64], [64,64], [3,3], [1,1], 2, 2))
+        self.layers.append(vgg_conv_block([1,64], [64,64], [3,3], [1,1], 2, 2))
         
         if args.split_layer >= 2:
             self.layers.append(vgg_conv_block([64,128], [128,128], [3,3], [1,1], 2, 2))
@@ -696,7 +697,7 @@ class VGG16_client_side(nn.Module):
             self.layers.append(vgg_conv_block([256,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2))
         
         if args.split_layer >= 5:
-            self.layers.append(vgg_conv_block([512,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2, should_pool=False))
+            self.layers.append(vgg_conv_block([512,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2, should_pool=True))
     
     def forward(self, x):
         for layer in self.layers:
@@ -719,7 +720,7 @@ class VGG16_server_side(nn.Module):
             self.layers.append(vgg_conv_block([256,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2))
         
         if args.split_layer < 5:
-            self.layers.append(vgg_conv_block([512,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2, should_pool=False))
+            self.layers.append(vgg_conv_block([512,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2, should_pool=True))
         
         fc_input_size = 512 * 14 * 14
             

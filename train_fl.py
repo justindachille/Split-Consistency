@@ -193,37 +193,7 @@ def main(args):
         for i in range(args.comm_round):
             party_list_rounds.append(party_list)
             
-    if args.dataset == 'ham10000':
-        def print_aggregated_labels(dataloader, client_name):
-            label_counts = {}
-            for batch in dataloader:
-                labels = batch[1]
-                for label in labels:
-                    label = label.item()
-                    if label in label_counts:
-                        label_counts[label] += 1
-                    else:
-                        label_counts[label] = 1
-
-            print(f"Aggregated label counts for {client_name}: {label_counts}")
-        train_dl_global, test_dl, client1_loader, client2_loader, net_dataidx_map = partition_data(
-            args,
-            args.dataset, args.datadir, args.logdir, args.partition, args.n_parties, beta=args.alpha, 
-           logger=logger
-        )
-        test_ds_global = []
-        train_ds_global = []
-        train_dl_local_list, test_dl_local_list = [],[]
-        print_aggregated_labels(client1_loader, 'client1')
-        print_aggregated_labels(client2_loader, 'client2')
-        train_dl_local_list.append(client1_loader)
-        train_dl_local_list.append(client2_loader)
-
-        test_dl_local_list.append(test_dl)
-        test_dl_local_list.append(test_dl)
-        n_classes = 7
-
-    elif args.dataset == 'stl10'or args.dataset == 'cifar10' or args.dataset == 'cifar100' or args.dataset == 'tinyimagenet':
+    if args.dataset == 'stl10' or args.dataset == 'cifar10' or args.dataset == 'cifar100' or args.dataset == 'tinyimagenet' or args.dataset == 'fashionmnist' or args.dataset == 'ham10000':
         X_train, y_train, X_test, y_test, net_dataidx_map, traindata_cls_counts = partition_data(
             args,
             args.dataset, args.datadir, args.logdir, args.partition, args.n_parties, beta=args.alpha, 
