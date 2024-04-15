@@ -13,7 +13,10 @@ def train_client_v1(net_id, nets, train_dataloader, epochs, lr, args_optimizer, 
     optimizer_server = get_optimizer(net_server, args.lr, args_optimizer, args)
 
     logger.info(f'Training network {net_id}')
-
+    if len(train_dataloader) == 0:
+        logger.info(f'Skipping training for client {net_id} due to empty dataloader')
+        return net_client.state_dict(), net_server.state_dict()
+    
     optimizer_client = get_optimizer(net_client, lr, args_optimizer, args)
 
     for epoch in range(epochs):
