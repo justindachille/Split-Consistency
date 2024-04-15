@@ -497,7 +497,7 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
         
         train_ds = DatasetSplit(train_ds, dataidxs)
 
-        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=False, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=True, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         
         if partition == 'subsample' and dataidxs is not None:
