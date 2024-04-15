@@ -30,9 +30,18 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import copy
+import argparse
 
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--seed', type=int, default=1234, help='default seed')
+    parser.add_argument('--communication_rounds', type=int, default=200, help='number of communication rounds')
+    parser.add_argument('--local_epoch', type=int, default=5, help='number of client local epochs')
+    args = parser.parse_args()
+    return args
+args = get_args()
 
-SEED = 1234
+SEED = args.seed
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
@@ -54,8 +63,8 @@ def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
 
 #===================================================================
 # No. of users
-num_users = 10
-epochs = 200
+num_users = 5
+communication_rounds = args.communication_rounds
 frac = 1        # participation of clients; if 1 then 100% clients participate in SFLV2
 lr = 0.01
 
@@ -129,14 +138,11 @@ if torch.cuda.device_count() > 1:
         net_glob_client)  # to use the multiple GPUs; later we can change this to CPUs only
 
 net_glob_client.to(device)
-print(net_glob_client)
-
 
 # =====================================================================================================
 #                           Server-side Model definition
 # =====================================================================================================
 # Model at server side
-
 
 
 class ResNet18_server_side(nn.Module):
@@ -180,7 +186,7 @@ if torch.cuda.device_count() > 1:
     net_glob_server = nn.DataParallel(net_glob_server)  # to use the multiple GPUs
 
 net_glob_server.to(device)
-print(net_glob_server)
+# print(net_glob_server)
 
 # ===================================================================================
 # For Server Side Loss and Accuracy
@@ -315,7 +321,7 @@ def train_server(fx_client, y, l_epoch_count, l_epoch, idx, len_batch):
             acc_train_collect_user = []
             loss_train_collect_user = []
             
-    # send gradients to the client               
+    # send gradients to the client
     return dfx_client
 
 # Server-side functions associated with Testing
@@ -340,7 +346,6 @@ def evaluate_server(fx_client, y, idx, len_batch, ell):
         
         batch_loss_test.append(loss.item())
         batch_acc_test.append(acc.item())
-        
                
         count2 += 1
         if count2 == len_batch:
@@ -376,7 +381,7 @@ def evaluate_server(fx_client, y, idx, len_batch, ell):
                 acc_test_collect_user = []
                 loss_test_collect_user= []
                               
-                print("====================== SERVER V1==========================")
+                print("====================== SERVER V2==========================")
                 print(' Train: Round {:3d}, Avg Accuracy {:.3f} | Avg Loss {:.3f}'.format(ell, acc_avg_all_user_train, loss_avg_all_user_train))
                 print(' Test: Round {:3d}, Avg Accuracy {:.3f} | Avg Loss {:.3f}'.format(ell, acc_avg_all_user, loss_avg_all_user))
                 print("==========================================================")
@@ -404,7 +409,7 @@ class Client(object):
         self.idx = idx
         self.device = device
         self.lr = lr
-        self.local_ep = 5
+        self.local_ep = args.local_epoch
         #self.selected_clients = []
         self.ldr_train = DataLoader(DatasetSplit(dataset_train, idxs), batch_size = 128, shuffle = True)
         self.ldr_test = DataLoader(DatasetSplit(dataset_test, idxs_test), batch_size = 100, shuffle = True)
@@ -559,6 +564,34 @@ dataset_test = datasets.CIFAR10('./data', train=False, download=True, transform=
 # with open('beta=0.1.pkl', 'rb') as file:
 #     dict_users=pickle.load(file)
 dict_users=cifar_user_dataset(dataset_train,num_users,0)
+def print_user_data_counts(dict_users, dataset_train):
+    user_data_counts = {}
+    total_count = 0
+    num_users = 0
+    
+    for user, indices in enumerate(dict_users):  # Assuming dict_users is a list of sets or lists
+        label_counts = {}
+        
+        for index in indices:  # Directly iterate over indices in each user's data
+            _, label = dataset_train[index]
+            
+            if label not in label_counts:
+                label_counts[label] = 1
+            else:
+                label_counts[label] += 1
+            
+        print(f"User {user} has label counts: {label_counts}")
+        
+        user_count = sum(label_counts.values())
+        user_data_counts[user] = user_count
+        
+        total_count += user_count
+        num_users += 1
+        
+    avg_size = total_count / num_users if num_users > 0 else 0
+    return user_data_counts, avg_size
+
+print_user_data_counts(dict_users, dataset_train)
 # with open('cifar0.1.txt', 'r') as file:
     # content = file.read()
 # dict_users = eval(content)
@@ -571,7 +604,7 @@ w_glob_client = net_glob_client.state_dict()
 
 # Federation takes place after certain local epochs in train() client-side
 # this epoch is global epoch, also known as rounds
-for iter in range(epochs):
+for iter in range(communication_rounds):
     m = max(int(frac * num_users), 1)
     idxs_users = np.random.choice(range(num_users), m, replace = False)
     w_locals_client = []
@@ -594,8 +627,38 @@ for iter in range(epochs):
     w_glob_client = FedAvg(w_locals_client)   
     
     # Update client-side global model 
-    net_glob_client.load_state_dict(w_glob_client)    
-    
+    net_glob_client.load_state_dict(w_glob_client)
+    batch_acc = []
+    batch_loss = []
+    test_loader = DataLoader(dataset_test, batch_size=100, shuffle=True)
+    loss_func = nn.CrossEntropyLoss()
+    # Evaluate on the entire test dataset
+
+    if iter % 5 == 0:  # Perform evaluation every 5 epochs
+        net_glob_client.eval()  # Set client model to evaluation mode
+        net_glob_server.eval()  # Set server model to evaluation mode
+        total_loss = 0
+        total_acc = 0
+        total_samples = 0
+        
+        with torch.no_grad():
+            for images, labels in test_loader:
+                images, labels = images.to(device), labels.to(device)
+                client_output = net_glob_client(images)  # Forward pass through the client model
+                server_output = net_glob_server(client_output)  # Forward pass through the server model
+                
+                loss = loss_func(server_output, labels)  # Calculate loss with server's output
+                acc = calculate_accuracy(server_output, labels)  # Calculate accuracy with server's output
+                
+                total_loss += loss.item() * labels.size(0)
+                total_acc += acc.item()
+                total_samples += labels.size(0)
+        
+        avg_loss = total_loss / total_samples
+        avg_acc = total_acc / len(test_loader)
+        
+        print(f"Test Round: {iter} - Avg Loss: {avg_loss:.4f}, Avg Acc: {avg_acc:.2f}%")
+
 #===================================================================================     
 
 print("Training and Evaluation completed!")    
@@ -612,8 +675,6 @@ print(acc_test_collect)
 #                         Program Completed
 #=============================================================================
  
-
-
 
 
 
