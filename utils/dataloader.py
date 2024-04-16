@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader, Dataset, Subset
 
 from torchvision.datasets import STL10, CIFAR10, CIFAR100, FashionMNIST, ImageFolder, DatasetFolder, utils
 import torchvision.transforms as transforms
+from torch.utils.data import Dataset
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -154,6 +155,9 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
         X_train, y_train, X_test, y_test = load_fashionmnist_data(args, datadir)
     elif dataset == 'ham10000':
         X_train, y_train, X_test, y_test = load_ham10000_data(args, datadir)
+
+    print('dtype', X_train.dtype)
+    print('[0]', X_train[0])
         
     n_train = y_train.shape[0]
 
@@ -266,17 +270,20 @@ def dataset_non_iid(dataset, num_users, beta=0.5, dirichlet_dist_to_use=None, su
 
     return dict_users, dirichlet_dist
 
-class HAM10000:
-    def __init__(self, datadir):
-        self.datadir = datadir
-        self.df, self.df_test = self.load_data()
-        self.print_data_info()
-        self.train_data, self.train_labels, self.test_data, self.test_labels = self.preprocess_data()
+class HAM10000(Dataset):
+    def __init__(self, root, transform=None, target_transform=None, train=True, subset_size=320):
+        self.root = root
+        self.transform = transform
+        self.target_transform = target_transform
+        self.train = train
+        self.subset_size = subset_size
 
-    def load_data(self):
-        df = pd.read_csv(os.path.join(self.datadir, 'HAM10000_metadata.csv'))
-        df_test = pd.read_csv(os.path.join(self.datadir, 'ISIC2018_Task3_Test_GroundTruth.csv'))
-        lesion_type = {
+        # Load metadata
+        metadata_path = os.path.join(self.root, "HAM10000_metadata.csv")
+        self.df = pd.read_csv(metadata_path)
+
+        # Define lesion types
+        self.lesion_type = {
             'nv': 'Melanocytic nevi',
             'mel': 'Melanoma',
             'bkl': 'Benign keratosis-like lesions ',
@@ -286,49 +293,58 @@ class HAM10000:
             'df': 'Dermatofibroma'
         }
 
-        def add_images(df):
-            imageid_path = {os.path.splitext(os.path.basename(x))[0]: x for x in glob(os.path.join(self.datadir, '*', '*.jpg'))}
-            df['path'] = df['image_id'].map(imageid_path.get)
-            df['cell_type'] = df['dx'].map(lesion_type.get)
-            df['target'] = pd.Categorical(df['cell_type']).codes
-            return df
+        # Create a mapping of image IDs to their file paths
+        imageid_path = {os.path.splitext(os.path.basename(x))[0]: x
+                        for x in glob(os.path.join(self.root, '*', '*.jpg'))}
+        self.df['path'] = self.df['image_id'].map(imageid_path.get)
+        self.df['cell_type'] = self.df['dx'].map(self.lesion_type.get)
+        self.df['target'] = pd.Categorical(self.df['cell_type']).codes
 
-        df = add_images(df)
-        df_test = add_images(df_test)
+        # Split dataset into train and test sets
+        train_df, test_df = train_test_split(self.df, test_size=0.2, random_state=42)
 
-        return df, df_test
+        if self.train:
+            self.data = train_df.sample(self.subset_size)
+        else:
+            self.data = test_df.sample(self.subset_size)
 
-    def print_data_info(self):
-        print(self.df['cell_type'].value_counts())
-        print(self.df['target'].value_counts())
+    def __len__(self):
+        return len(self.data)
 
-    def preprocess_data(self):
-        train_data = []
-        train_labels = []
-        test_data = []
-        test_labels = []
+    def __getitem__(self, index):
+        img_path = self.data['path'].iloc[index]
+        X = Image.open(img_path).resize((224, 224))
+        y = self.data['target'].iloc[index]
 
-        for _, row in self.df.iterrows():
-            img_path = row['path']
-            label = row['target']
-            img = Image.open(img_path).resize((64, 64))
-            train_data.append(img)
-            train_labels.append(label)
+        if self.transform:
+            X = self.transform(X)
 
-        for _, row in self.df_test.iterrows():
-            img_path = row['path']
-            label = row['target']
-            img = Image.open(img_path).resize((64, 64))
-            test_data.append(img)
-            test_labels.append(label)
+        if self.target_transform:
+            y = self.target_transform(y)
 
-        return train_data, train_labels, test_data, test_labels
-
+        return X, y
+    
 def load_ham10000_data(args, datadir):
-    ham10000 = HAM10000(datadir)
-    X_train, y_train = ham10000.train_data, ham10000.train_labels
-    X_test, y_test = ham10000.test_data, ham10000.test_labels
-    return (X_train, y_train, X_test, y_test)
+    transform = transforms.Compose([transforms.ToTensor()])
+    ham10000_train = HAM10000(datadir, transform=transform, train=True)
+    ham10000_test = HAM10000(datadir, transform=transform, train=False)
+
+    X_train, y_train = [], []
+    for img, target in ham10000_train:
+        X_train.append(img)
+        y_train.append(target)
+
+    X_test, y_test = [], []
+    for img, target in ham10000_test:
+        X_test.append(img)
+        y_test.append(target)
+
+    X_train = torch.stack(X_train)
+    y_train = torch.tensor(y_train)
+    X_test = torch.stack(X_test)
+    y_test = torch.tensor(y_test)
+
+    return X_train, y_train, X_test, y_test
 
 class ImageFolder_custom(DatasetFolder):
     def __init__(self, root, dataidxs=None, train=True, transform=None, target_transform=None):
@@ -371,26 +387,20 @@ class CustomDataset(Dataset):
         self.targets = torch.LongTensor(targets)
         self.transforms = transforms
 
-#         print(self.data.shape)
-#         print(self.targets.shape)
+        print(self.data.shape)
+        print(self.targets.shape)
 
     def __len__(self):
         return self.targets.shape[0]
 
     def __getitem__(self, index):
-        if isinstance(self.data[index], tuple):
-            path, target = self.data[index]
-            batch_x = Image.open(path).resize((64, 64))
-        else:
-            batch_x = self.data[index]
-
-        batch_y = self.targets[index]
-
         if self.transforms is not None:
-            batch_x = self.transforms(batch_x)
+            batch_x, batch_y = self.transforms(self.data[index]), self.targets[index]
+        else:
+            batch_x, batch_y = self.data[index], self.targets[index]
 
         return batch_x, batch_y
-    
+
 
 class DatasetSplit(Dataset):
     def __init__(self, dataset, idxs):
@@ -610,15 +620,17 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
             transforms.Pad(3),
             transforms.RandomRotation(10),
             transforms.CenterCrop(64),
-            transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
+
         transform_test = transforms.Compose([
             transforms.Pad(3),
             transforms.CenterCrop(64),
-            transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
+
+        y_train = y_train.long()
+        y_test = y_test.long()
 
         train_ds = CustomDataset(X_train, y_train, transforms=transform_train)
         test_ds = CustomDataset(X_test, y_test, transforms=transform_test)
@@ -628,8 +640,7 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
         train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=True, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
 
-    return train_dl, test_dl, train_ds, test_ds, test_dl_local
-
+        return train_dl, test_dl, train_ds, test_ds, test_dl_local
 def FedAvg(w):
     w_avg = copy.deepcopy(w[0])
     for k in w_avg.keys():

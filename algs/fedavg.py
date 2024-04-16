@@ -46,6 +46,7 @@ def train_net_fedavg(net_id, net, train_dataloader, test_dataloader, epochs, lr,
 
             optimizer.zero_grad()
             _, _, out, _, _ = net(x)
+
             loss = criterion(out, target)
 
             loss.backward()

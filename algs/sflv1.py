@@ -13,6 +13,7 @@ def train_client_v1(net_id, nets, train_dataloader, epochs, lr, args_optimizer, 
     optimizer_server = get_optimizer(net_server, args.lr, args_optimizer, args)
 
     logger.info(f'Training network {net_id}')
+    logger.info(len(train_dataloader))
     if len(train_dataloader) == 0:
         logger.info(f'Skipping training for client {net_id} due to empty dataloader')
         return net_client.state_dict(), net_server.state_dict()
@@ -54,6 +55,8 @@ def train_server(client_output, target, args, device, net_server, optimizer_serv
     optimizer_server.zero_grad()
     server_output = net_server(client_output)
 
+    print("Output shape:", server_output.shape)
+    print("Target shape:", target.shape)
     loss = criterion(server_output, target)
     loss.backward()
 

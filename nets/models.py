@@ -739,3 +739,79 @@ class VGG16_server_side(nn.Module):
         out = self.layer8(out)
 
         return out
+    
+    
+class LeNet(nn.Module):
+    '''
+    input: 3x450x600 image
+    output: n class probability
+    '''
+    def __init__(self, args, num_classes=10):
+        super(LeNet, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.maxPool = nn.MaxPool2d(2, 2)
+        self.fc1 = nn.Linear(5408, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, num_classes)
+
+    def forward(self, x):
+        x = self.maxPool(self.conv1(x).relu())
+        x = self.maxPool(self.conv2(x).relu())
+        x = x.view(-1, 5408)
+        x = self.fc1(x).relu()
+        x = self.fc2(x).relu()
+        x = self.fc3(x)
+        return 0, 0, x, 0, 0
+    
+class LeNet_client_side(nn.Module):
+    def __init__(self, args):
+        super(LeNet_client_side, self).__init__()
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(3, 6, 5),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2)
+        )
+        
+        assert 1 <= args.split_layer <= 2
+        self.layers = nn.ModuleList()
+        
+        if args.split_layer >= 2:
+            self.layers.append(nn.Sequential(
+                nn.Conv2d(6, 16, 5),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2)
+            ))
+
+    def forward(self, x):
+        out = self.conv1(x)
+        for layer in self.layers:
+            out = layer(out)
+        return out
+
+class LeNet_server_side(nn.Module):
+    def __init__(self, args, num_classes=10):
+        super(LeNet_server_side, self).__init__()
+        self.layers = nn.ModuleList()
+        
+        if args.split_layer < 2:
+            self.layers.append(nn.Sequential(
+                nn.Conv2d(6, 16, 5),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2)
+            ))
+        
+        self.fc = nn.Sequential(
+            nn.Linear(16 * 5 * 5, 120),
+            nn.ReLU(),
+            nn.Linear(120, 84),
+            nn.ReLU(),
+            nn.Linear(84, num_classes)
+        )
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        x = x.view(-1, 16 * 5 * 5)
+        out = self.fc(x)
+        return out
