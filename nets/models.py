@@ -621,197 +621,391 @@ class ResNet_50_server_side(nn.Module):
         return preds
 
 
-def conv_layer(chann_in, chann_out, k_size, p_size):
-    layer = nn.Sequential(
-        nn.Conv2d(chann_in, chann_out, kernel_size=k_size, padding=p_size),
-        nn.BatchNorm2d(chann_out),
-        nn.ReLU()
-    )
-    return layer
+from typing import Any, Callable, List, Optional, Union
+
+import torch
+from torch import nn, Tensor
+
+__all__ = [
+    "MobileNetV3",
+    "mobilenet_v3_large",
+    "mobilenet_v3_small",
+]
 
 
-def vgg_conv_block(in_list, out_list, k_list, p_list, pooling_k, pooling_s, should_pool=True):
-    layers = [conv_layer(in_list[0], out_list[0], k_list[0], p_list[0])]
-    layers += [conv_layer(out_list[i-1], out_list[i], k_list[i], p_list[i]) for i in range(1, len(out_list))]
-    if should_pool:
-        layers += [nn.MaxPool2d(kernel_size=pooling_k, stride=pooling_s)]
+class SqueezeExcitation(torch.nn.Module):
+    """This Squeeze-and-Excitation block
+    Args:
+        in_channels (int): Number of channels in the input image
+        squeeze_channels (int): Number of squeeze channels
+    """
+
+    def __init__(
+            self,
+            in_channels: int,
+            squeeze_channels: int,
+    ) -> None:
+        super().__init__()
+        self.avg_pool = torch.nn.AdaptiveAvgPool2d(1)
+        self.fc1 = torch.nn.Conv2d(in_channels, squeeze_channels, 1)
+        self.fc2 = torch.nn.Conv2d(squeeze_channels, in_channels, 1)
+        self.relu = nn.ReLU()  # `delta` activation
+        self.hard = nn.Hardsigmoid()  # `sigma` (aka scale) activation
+
+    def forward(self, x: Tensor) -> Tensor:
+        scale = self.avg_pool(x)
+        scale = self.fc1(scale)
+        scale = self.relu(scale)
+        scale = self.fc2(scale)
+        scale = self.hard(scale)
+        return scale * x
+
+
+def _make_divisible(v: float, divisor: int = 8) -> int:
+    """This function ensures that all layers have a channel number divisible by 8"""
+    new_v = max(divisor, int(v + divisor / 2) // divisor * divisor)
+    # Make sure that round down does not go down by more than 10%.
+    if new_v < 0.9 * v:
+        new_v += divisor
+    return new_v
+
+
+class Conv2dNormActivation(torch.nn.Sequential):
+    """Convolutional block, consists of nn.Conv2d, nn.BatchNorm2d, nn.ReLU"""
+
+    def __init__(
+            self,
+            in_channels: int,
+            out_channels: int,
+            kernel_size: int = 3,
+            stride: int = 1,
+            padding: Optional = None,
+            groups: int = 1,
+            activation_layer: Optional[Callable[..., torch.nn.Module]] = torch.nn.ReLU,
+            dilation: int = 1,
+            inplace: Optional[bool] = True,
+            bias: bool = False,
+    ) -> None:
+
+        if padding is None:
+            padding = (kernel_size - 1) // 2 * dilation
+
+        layers: List[nn.Module] = [
+            nn.Conv2d(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=padding,
+                dilation=dilation,
+                groups=groups,
+                bias=bias,
+            ),
+            nn.BatchNorm2d(num_features=out_channels, eps=0.001, momentum=0.01)
+        ]
+
+        if activation_layer is not None:
+            params = {} if inplace is None else {"inplace": inplace}
+            layers.append(activation_layer(**params))
+        super().__init__(*layers)
+
+
+class InvertedResidual(nn.Module):
+    """Inverted Residual block"""
+
+    def __init__(
+            self,
+            in_channels: int,
+            kernel: int,
+            exp_channels: int,
+            out_channels: int,
+            use_se: bool,
+            activation: str,
+            stride: int,
+            dilation: int,
+    ) -> None:
+        super().__init__()
+        self._shortcut = stride == 1 and in_channels == out_channels
+
+        in_channels = _make_divisible(in_channels)
+        exp_channels = _make_divisible(exp_channels)
+        out_channels = _make_divisible(out_channels)
+
+        layers: List[nn.Module] = []
+        activation_layer = nn.Hardswish if activation == "HS" else nn.ReLU
+
+        # expand
+        if exp_channels != in_channels:
+            layers.append(
+                Conv2dNormActivation(
+                    in_channels=in_channels,
+                    out_channels=exp_channels,
+                    kernel_size=1,
+                    activation_layer=activation_layer,
+                )
+            )
+
+        # depth-wise convolution
+        layers.append(
+            Conv2dNormActivation(
+                in_channels=exp_channels,
+                out_channels=exp_channels,
+                kernel_size=kernel,
+                stride=1 if dilation > 1 else stride,
+                dilation=dilation,
+                groups=exp_channels,
+                activation_layer=activation_layer,
+            )
+        )
+        if use_se:
+            squeeze_channels = _make_divisible(exp_channels // 4, 8)
+            layers.append(
+                SqueezeExcitation(
+                    in_channels=exp_channels,
+                    squeeze_channels=squeeze_channels
+                )
+            )
+
+        # project layer
+        layers.append(
+            Conv2dNormActivation(
+                in_channels=exp_channels,
+                out_channels=out_channels,
+                kernel_size=1,
+                activation_layer=None
+            )
+        )
+
+        self.block = nn.Sequential(*layers)
+
+    def forward(self, x: Tensor) -> Tensor:
+        result = self.block(x)
+        if self._shortcut:
+            result += x
+        return result
+
+
+class MobileNetV3(nn.Module):
+    def __init__(
+            self,
+            inverted_residual_setting: List[List[Union[int, str, bool]]],
+                last_channel: int,
+            num_classes: int = 1000,
+            dropout: float = 0.2,
+    ) -> None:
+        """MobileNet V3 main class
+        Args:
+            inverted_residual_setting: network structure
+            last_channel: number of channels on the penultimate layer
+            num_classes: number of classes
+            dropout: dropout probability
+        """
+        super().__init__()
+
+        # building first layer
+        first_conv_out_channels = inverted_residual_setting[0][0]
+        layers: List[nn.Module] = [
+            Conv2dNormActivation(
+                in_channels=3,
+                out_channels=first_conv_out_channels,
+                kernel_size=3,
+                stride=2,
+                activation_layer=nn.Hardswish,
+            )
+        ]
+
+        # building inverted residual blocks
+        for params in inverted_residual_setting:
+            layers.append(InvertedResidual(*params))
+
+        # building last several layers
+        last_conv_in_channels = inverted_residual_setting[-1][3]
+        last_conv_out_channels = 6 * last_conv_in_channels
+        layers.append(
+            Conv2dNormActivation(
+                in_channels=last_conv_in_channels,
+                out_channels=last_conv_out_channels,
+                kernel_size=1,
+                activation_layer=nn.Hardswish,
+            )
+        )
+
+        self.features = nn.Sequential(*layers)
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.classifier = nn.Sequential(
+            nn.Linear(last_conv_out_channels, last_channel),
+            nn.Hardswish(inplace=True),
+            nn.Dropout(p=dropout, inplace=True),
+            nn.Linear(last_channel, num_classes),
+        )
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out")
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                nn.init.ones_(m.weight)
+                nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, 0, 0.01)
+                nn.init.zeros_(m.bias)
+
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.features(x)
+        x = self.avg_pool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return 0, 0, x, 0, 0
+
+def Get_Arch(arch):
+    if arch == "mobilenet_v3_large":
+        return [
+            [16, 3, 16, 16, False, "RE", 1, 1],
+            [16, 3, 64, 24, False, "RE", 2, 1],  # C1
+            [24, 3, 72, 24, False, "RE", 1, 1],
+            [24, 5, 72, 40, True, "RE", 2, 1],  # C2
+            [40, 5, 120, 40, True, "RE", 1, 1],
+            [40, 5, 120, 40, True, "RE", 1, 1],
+            [40, 3, 240, 80, False, "HS", 2, 1],  # C3
+            [80, 3, 200, 80, False, "HS", 1, 1],
+            [80, 3, 184, 80, False, "HS", 1, 1],
+            [80, 3, 184, 80, False, "HS", 1, 1],
+            [80, 3, 480, 112, True, "HS", 1, 1],
+            [112, 3, 672, 112, True, "HS", 1, 1],
+            [112, 5, 672, 160, True, "HS", 2, 1],  # C4
+            [160, 5, 960, 160, True, "HS", 1, 1],
+            [160, 5, 960, 160, True, "HS", 1, 1],
+        ]
+    elif arch == "mobilenet_v3_small":
+        return [
+            [16, 3, 16, 16, True, "RE", 2, 1],  # C1
+            [16, 3, 72, 24, False, "RE", 2, 1],  # C2
+            [24, 3, 88, 24, False, "RE", 1, 1],
+            [24, 5, 96, 40, True, "HS", 2, 1],  # C3
+            [40, 5, 240, 40, True, "HS", 1, 1],
+            [40, 5, 240, 40, True, "HS", 1, 1],
+            [40, 5, 120, 48, True, "HS", 1, 1],
+            [48, 5, 144, 48, True, "HS", 1, 1],
+            [48, 5, 288, 96, True, "HS", 2, 1],  # C4
+            [96, 5, 576, 96, True, "HS", 1, 1],
+            [96, 5, 576, 96, True, "HS", 1, 1],
+        ]
     
-    return nn.Sequential(*layers)
+    
+def _mobilenet_v3(arch: str, **kwargs: Any, ) -> MobileNetV3:
+    inverted_residual_setting = Get_Arch(arch)
+    if arch == "mobilenet_v3_large":
+        last_channel = 1280  # C5
+    elif arch == "mobilenet_v3_small":
+        last_channel = 1024  # C5
+    else:
+        raise ValueError(f"Unsupported model type {arch}")
+
+    model = MobileNetV3(inverted_residual_setting, last_channel, **kwargs)
+
+    return model
 
 
-def vgg_fc_layer(size_in, size_out):
-    layer = nn.Sequential(
-        nn.Linear(size_in, size_out),
-        nn.BatchNorm1d(size_out),
-        nn.ReLU()
-    )
-    return layer
+def MobileNetV3_(**kwargs: Any) -> MobileNetV3:
+    return _mobilenet_v3(arch="mobilenet_v3_large", **kwargs)
 
 
-class VGG16(nn.Module):
-    def __init__(self, n_classes=1000):
-        super(VGG16, self).__init__()
-
-        # Conv blocks (BatchNorm + ReLU activation added in each block)
-        # Set to 1 for grayscale FMNIST currently
-        self.layer1 = vgg_conv_block([1,64], [64,64], [3,3], [1,1], 2, 2)
-        self.layer2 = vgg_conv_block([64,128], [128,128], [3,3], [1,1], 2, 2)
-        self.layer3 = vgg_conv_block([128,256,256], [256,256,256], [3,3,3], [1,1,1], 2, 2)
-        self.layer4 = vgg_conv_block([256,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2)
-        self.layer5 = vgg_conv_block([512,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2, should_pool=False)
-
-        self.layer6 = vgg_fc_layer(14*14*512, 4096)
-        self.layer7 = vgg_fc_layer(4096, 4096)
-
-        self.layer8 = nn.Linear(4096, n_classes)
-
-    def forward(self, x):
-        out = self.layer1(x)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        vgg16_features = self.layer5(out)
-        out = vgg16_features.view(out.size(0), -1)
-        out = self.layer6(out)
-        out = self.layer7(out)
-        out = self.layer8(out)
-
-        return 0, 0, out, 0, 0
+def MobileNetV3_small(**kwargs: Any) -> MobileNetV3:
+    return _mobilenet_v3(arch="mobilenet_v3_small", **kwargs)
 
 
-class VGG16_client_side(nn.Module):
+class MobileNetV3_client_side(nn.Module):
     def __init__(self, args):
-        super(VGG16_client_side, self).__init__()
-        self.layers = nn.ModuleList()
-        assert 1 <= args.split_layer <= 5
+        super(MobileNetV3_client_side, self).__init__()
+        # Always default to large
+        inverted_residual_setting = Get_Arch("mobilenet_v3_large")
+        first_conv_out_channels = inverted_residual_setting[0][0]
+        self.features = nn.Sequential(
+            Conv2dNormActivation(
+                in_channels=3,
+                out_channels=first_conv_out_channels,
+                kernel_size=3,
+                stride=2,
+                activation_layer=nn.Hardswish,
+            )
+        )
 
-        self.layers.append(vgg_conv_block([1,64], [64,64], [3,3], [1,1], 2, 2))
-        
+        assert 1 <= args.split_layer <= 4
+
+        self.layers = nn.ModuleList()
+        start_idx = 0
+        if args.split_layer >= 1:
+            end_idx = len(inverted_residual_setting) // 4
+            self.layers.append(self.make_layer(inverted_residual_setting, start_idx, end_idx))
+            start_idx = end_idx
         if args.split_layer >= 2:
-            self.layers.append(vgg_conv_block([64,128], [128,128], [3,3], [1,1], 2, 2))
-        
+            end_idx = len(inverted_residual_setting) // 2
+            self.layers.append(self.make_layer(inverted_residual_setting, start_idx, end_idx))
+            start_idx = end_idx
         if args.split_layer >= 3:
-            self.layers.append(vgg_conv_block([128,256,256], [256,256,256], [3,3,3], [1,1,1], 2, 2))
-        
+            end_idx = len(inverted_residual_setting) * 3 // 4
+            self.layers.append(self.make_layer(inverted_residual_setting, start_idx, end_idx))
+            start_idx = end_idx
         if args.split_layer >= 4:
-            self.layers.append(vgg_conv_block([256,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2))
-        
-        if args.split_layer >= 5:
-            self.layers.append(vgg_conv_block([512,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2, should_pool=True))
-    
+            end_idx = len(inverted_residual_setting)
+            self.layers.append(self.make_layer(inverted_residual_setting, start_idx, end_idx))
+
+    def make_layer(self, inverted_residual_setting, start_idx, end_idx):
+        layers = []
+        for params in inverted_residual_setting[start_idx:end_idx]:
+            layers.append(InvertedResidual(*params))
+        return nn.Sequential(*layers)
+
     def forward(self, x):
+        x = self.features(x)
         for layer in self.layers:
             x = layer(x)
         return x
 
-    
-class VGG16_server_side(nn.Module):
+
+class MobileNetV3_server_side(nn.Module):
     def __init__(self, args, num_classes=1000):
-        super(VGG16_server_side, self).__init__()
-        self.layers = nn.ModuleList()
-        
-        if args.split_layer < 2:
-            self.layers.append(vgg_conv_block([64,128], [128,128], [3,3], [1,1], 2, 2))
-        
-        if args.split_layer < 3:
-            self.layers.append(vgg_conv_block([128,256,256], [256,256,256], [3,3,3], [1,1,1], 2, 2))
+        super(MobileNetV3_server_side, self).__init__()
+        inverted_residual_setting = Get_Arch("mobilenet_v3_large")
+        last_channel = 1280
+        dropout = 0.2
 
+        self.layers = nn.ModuleList()
         if args.split_layer < 4:
-            self.layers.append(vgg_conv_block([256,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2))
-        
-        if args.split_layer < 5:
-            self.layers.append(vgg_conv_block([512,512,512], [512,512,512], [3,3,3], [1,1,1], 2, 2, should_pool=True))
-        
-        fc_input_size = 512 * 14 * 14
-            
-        self.layer6 = vgg_fc_layer(fc_input_size, 4096)
-        self.layer7 = vgg_fc_layer(4096, 4096)
-        self.layer8 = nn.Linear(4096, num_classes)
-        
-    def forward(self, x):
-        for layer in self.layers:
-            x = layer(x)
+            start_idx = len(inverted_residual_setting) * 3 // 4
+            end_idx = len(inverted_residual_setting)
+            self.layers.append(self.make_layer(inverted_residual_setting, start_idx, end_idx))
 
-        vgg16_features = x
-        out = vgg16_features.view(x.size(0), -1)
-        out = self.layer6(out)
-        out = self.layer7(out)
-        out = self.layer8(out)
-
-        return out
-    
-    
-class LeNet(nn.Module):
-    '''
-    input: 3x450x600 image
-    output: n class probability
-    '''
-    def __init__(self, args, num_classes=10):
-        super(LeNet, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.maxPool = nn.MaxPool2d(2, 2)
-        self.fc1 = nn.Linear(5408, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, num_classes)
-
-    def forward(self, x):
-        x = self.maxPool(self.conv1(x).relu())
-        x = self.maxPool(self.conv2(x).relu())
-        x = x.view(-1, 5408)
-        x = self.fc1(x).relu()
-        x = self.fc2(x).relu()
-        x = self.fc3(x)
-        return 0, 0, x, 0, 0
-    
-class LeNet_client_side(nn.Module):
-    def __init__(self, args):
-        super(LeNet_client_side, self).__init__()
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(3, 6, 5),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2)
+        last_conv_in_channels = inverted_residual_setting[-1][3]
+        last_conv_out_channels = 6 * last_conv_in_channels
+        self.layers.append(
+            Conv2dNormActivation(
+                in_channels=last_conv_in_channels,
+                out_channels=last_conv_out_channels,
+                kernel_size=1,
+                activation_layer=nn.Hardswish,
+            )
         )
-        
-        assert 1 <= args.split_layer <= 2
-        self.layers = nn.ModuleList()
-        
-        if args.split_layer >= 2:
-            self.layers.append(nn.Sequential(
-                nn.Conv2d(6, 16, 5),
-                nn.ReLU(),
-                nn.MaxPool2d(2, 2)
-            ))
 
-    def forward(self, x):
-        out = self.conv1(x)
-        for layer in self.layers:
-            out = layer(out)
-        return out
-
-class LeNet_server_side(nn.Module):
-    def __init__(self, args, num_classes=10):
-        super(LeNet_server_side, self).__init__()
-        self.layers = nn.ModuleList()
-        
-        if args.split_layer < 2:
-            self.layers.append(nn.Sequential(
-                nn.Conv2d(6, 16, 5),
-                nn.ReLU(),
-                nn.MaxPool2d(2, 2)
-            ))
-        
-        self.fc = nn.Sequential(
-            nn.Linear(16 * 5 * 5, 120),
-            nn.ReLU(),
-            nn.Linear(120, 84),
-            nn.ReLU(),
-            nn.Linear(84, num_classes)
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.classifier = nn.Sequential(
+            nn.Linear(last_conv_out_channels, last_channel),
+            nn.Hardswish(inplace=True),
+            nn.Dropout(p=dropout, inplace=True),
+            nn.Linear(last_channel, num_classes),
         )
+
+    def make_layer(self, inverted_residual_setting, start_idx, end_idx):
+        layers = []
+        for params in inverted_residual_setting[start_idx:end_idx]:
+            layers.append(InvertedResidual(*params))
+        return nn.Sequential(*layers)
 
     def forward(self, x):
         for layer in self.layers:
             x = layer(x)
-        x = x.view(-1, 16 * 5 * 5)
-        out = self.fc(x)
-        return out
+        x = self.avg_pool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x

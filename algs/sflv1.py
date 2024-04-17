@@ -55,8 +55,6 @@ def train_server(client_output, target, args, device, net_server, optimizer_serv
     optimizer_server.zero_grad()
     server_output = net_server(client_output)
 
-    print("Output shape:", server_output.shape)
-    print("Target shape:", target.shape)
     loss = criterion(server_output, target)
     loss.backward()
 

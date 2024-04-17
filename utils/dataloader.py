@@ -105,7 +105,7 @@ def load_fashionmnist_data(args, datadir):
 def load_tinyimagenet_data(args, datadir):
     transform = transforms.Compose([transforms.ToTensor()])
     xray_train_ds = ImageFolder_custom(datadir+'tiny-imagenet-200/train/', transform=transform)
-    xray_test_ds = ImageFolder_custom(datadir+'tiny-imagenet-200/val/images', transform=transform)
+    xray_test_ds = ImageFolder_custom(datadir+'tiny-imagenet-200/val_again/', transform=transform)
 
     X_train, y_train = np.array([s[0] for s in xray_train_ds.samples]), np.array([int(s[1]) for s in xray_train_ds.samples])
     X_test, y_test = np.array([s[0] for s in xray_test_ds.samples]), np.array([int(s[1]) for s in xray_test_ds.samples])
