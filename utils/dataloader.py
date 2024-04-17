@@ -156,9 +156,6 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
     elif dataset == 'ham10000':
         X_train, y_train, X_test, y_test = load_ham10000_data(args, datadir)
 
-    print('dtype', X_train.dtype)
-    print('[0]', X_train[0])
-        
     n_train = y_train.shape[0]
 
     if partition == "homo" or partition == "iid":
@@ -640,7 +637,7 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
         train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=True, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
 
-        return train_dl, test_dl, train_ds, test_ds, test_dl_local
+    return train_dl, test_dl, train_ds, test_ds, test_dl_local
 def FedAvg(w):
     w_avg = copy.deepcopy(w[0])
     for k in w_avg.keys():
