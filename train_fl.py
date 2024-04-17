@@ -28,6 +28,7 @@ from nets.models import AlexNet, AlexNetClient, AlexNetServer
 from nets.models import ResNet_18, ResidualBlock, ResNet_18_client_side, ResNet_18_server_side
 from nets.models import ResNet_50, ResNet_50_client_side, ResNet_50_server_side
 from nets.models import VGG16, VGG16_client_side, VGG16_server_side
+from nets.models import LeNet, LeNet_client_side, LeNet_server_side
 
 from algs.fedavg import train_net_fedavg
 from algs.fedprox import train_net_fedprox
@@ -68,6 +69,8 @@ def init_nets(n_parties, args, device, n_classes):
             global_server_model = ResNet_50_server_side(args, num_classes=n_classes)
         elif args.model == 'vgg-16':
             global_server_model = VGG16_server_side(args, num_classes=n_classes)
+        elif args.model == 'lenet':
+            global_server_model = LeNet_server_side(args, num_classes=n_classes)
             
     for net_i in range(n_parties):
         if args.model == 'resnet-50':
@@ -102,6 +105,17 @@ def init_nets(n_parties, args, device, n_classes):
                 server_net = None
             else:
                 net = VGG16(n_classes)
+        elif args.model == 'lenet':
+            if args.alg == 'sflv1':
+                client_net = LeNet_client_side(args)
+                server_net = LeNet_server_side(args, num_classes=n_classes)
+                print_split_parameter_settings(client_net, server_net, net_i)
+            elif args.alg == 'sflv2':
+                client_net = LeNet_client_side(args)
+                server_net = None
+            else:
+                net = LeNet(args, num_classes=n_classes)
+                
         if args.alg == 'sflv1':
             nets[net_i] = (client_net.to(device), server_net.to(device))
         elif args.alg == 'sflv2':
