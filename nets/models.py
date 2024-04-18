@@ -364,9 +364,11 @@ class AlexNet(nn.Module):
         x = x.view(x.size(0), 256 * 2 * 2)  # Flatten the output for the classifier
         x = self.classifier(x)
         return 0, 0, x, 0, 0
-  
+
 
 class ResidualBlock(nn.Module):
+    expansion = 1
+    
     def __init__(self, inchannel, outchannel, stride=1):
         super(ResidualBlock, self).__init__()
         self.left = nn.Sequential(
@@ -431,38 +433,36 @@ class ResNet_18_client_side(nn.Module):
 
 
 class ResNet_18_server_side(nn.Module):
-    def __init__(self, ResidualBlock, args, num_classes=100):
+    def __init__(self, ResidualBlock, args, num_classes=7):
         super(ResNet_18_server_side, self).__init__()
-        
         self.layers = nn.ModuleList()
-        
         self.inchannel = 64 * (2 ** (args.split_layer - 1))
-            
+
         if args.split_layer < 2:
             self.layers.append(self.make_layer(ResidualBlock, 128, 2, stride=2))
-        
         if args.split_layer < 3:
             self.layers.append(self.make_layer(ResidualBlock, 256, 2, stride=2))
-        
         if args.split_layer < 4:
             self.layers.append(self.make_layer(ResidualBlock, 512, 2, stride=2))
-        
-        self.fc = nn.Linear(512, num_classes)
-    
+
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(512 * ResidualBlock.expansion, num_classes)
+
     def make_layer(self, block, channels, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
             layers.append(block(self.inchannel, channels, stride))
-            self.inchannel = channels
+            self.inchannel = channels * block.expansion
         return nn.Sequential(*layers)
-    
+
     def forward(self, x):
         for layer in self.layers:
             x = layer(x)
-        
-        x = nn.functional.avg_pool2d(x, 4)
-        x = x.view(x.size(0), -1)
+
+        x = self.avgpool(x)  # Apply adaptive average pooling
+        x = torch.flatten(x, 1)  # Flatten the output
+
         out = self.fc(x)
         return out
     

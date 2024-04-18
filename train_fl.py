@@ -245,8 +245,13 @@ def main(args):
                                  )
         
     train_dl=None
+    
     data_size = len(test_ds_global)
-
+    if args.dataset == 'ham10000':
+        n_classes = 7
+    elif args.dataset == 'tinyimagenet':
+        n_classes = 200
+        
     if args.alg != 'sflv2':
         nets, local_model_meta_data, layer_type, _ = init_nets(args.n_parties, args, device, n_classes)
         global_models, global_model_meta_data, global_layer_type, _ = init_nets(1, args, device, n_classes)

@@ -273,31 +273,29 @@ class HAM10000(Dataset):
         self.transform = transform
         self.target_transform = target_transform
         self.train = train
-#         self.subset_size = subset_size
 
-        # Load metadata
         metadata_path = os.path.join(self.root, "HAM10000_metadata.csv")
         self.df = pd.read_csv(metadata_path)
 
-        # Define lesion types
-        self.lesion_type = {
+        lesion_type_dict = {
             'nv': 'Melanocytic nevi',
             'mel': 'Melanoma',
-            'bkl': 'Benign keratosis-like lesions ',
+            'bkl': 'Benign keratosis-like lesions',
             'bcc': 'Basal cell carcinoma',
             'akiec': 'Actinic keratoses',
             'vasc': 'Vascular lesions',
             'df': 'Dermatofibroma'
         }
 
-        # Create a mapping of image IDs to their file paths
+        self.lesion_type_to_idx = {lesion_type: idx for idx, lesion_type in enumerate(lesion_type_dict.values())}
+
         imageid_path = {os.path.splitext(os.path.basename(x))[0]: x
                         for x in glob(os.path.join(self.root, '*', '*.jpg'))}
-        self.df['path'] = self.df['image_id'].map(imageid_path.get)
-        self.df['cell_type'] = self.df['dx'].map(self.lesion_type.get)
-        self.df['target'] = pd.Categorical(self.df['cell_type']).codes
 
-        # Split dataset into train and test sets
+        self.df['path'] = self.df['image_id'].map(imageid_path.get)
+        self.df['cell_type'] = self.df['dx'].map(lesion_type_dict)
+        self.df['target'] = self.df['cell_type'].map(self.lesion_type_to_idx.get)
+
         train_df, test_df = train_test_split(self.df, test_size=0.2, random_state=42)
 
         if self.train:
@@ -310,7 +308,7 @@ class HAM10000(Dataset):
 
     def __getitem__(self, index):
         img_path = self.data['path'].iloc[index]
-        X = Image.open(img_path).resize((224, 224))
+        X = Image.open(img_path).resize((64, 64))
         y = self.data['target'].iloc[index]
 
         if self.transform:
