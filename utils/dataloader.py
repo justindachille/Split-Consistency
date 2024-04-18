@@ -268,12 +268,12 @@ def dataset_non_iid(dataset, num_users, beta=0.5, dirichlet_dist_to_use=None, su
     return dict_users, dirichlet_dist
 
 class HAM10000(Dataset):
-    def __init__(self, root, transform=None, target_transform=None, train=True, subset_size=320):
+    def __init__(self, root, transform=None, target_transform=None, train=True):
         self.root = root
         self.transform = transform
         self.target_transform = target_transform
         self.train = train
-        self.subset_size = subset_size
+#         self.subset_size = subset_size
 
         # Load metadata
         metadata_path = os.path.join(self.root, "HAM10000_metadata.csv")
@@ -301,9 +301,9 @@ class HAM10000(Dataset):
         train_df, test_df = train_test_split(self.df, test_size=0.2, random_state=42)
 
         if self.train:
-            self.data = train_df.sample(self.subset_size)
+            self.data = train_df
         else:
-            self.data = test_df.sample(self.subset_size)
+            self.data = test_df
 
     def __len__(self):
         return len(self.data)
