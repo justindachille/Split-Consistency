@@ -749,6 +749,8 @@ if __name__ == "__main__":
     parser.add_argument('--n_train_workers', type=int, default=8, help='number of workers in a distributed cluster')   
     parser.add_argument('--n_test_workers', type=int, default=8, help='number of workers in a distributed cluster')   
     
+    parser.add_argument('--arch', type=str, default='mobilenet_v3_large', help='which mobilenetv3 architecture to use (default: mobilenet_v3_large), otherwise mobilenet_v3_small')   
+
     args = parser.parse_args()
     print(args.dataset)
     for dataset in args.dataset:

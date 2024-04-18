@@ -918,10 +918,14 @@ def MobileNetV3_small(**kwargs: Any) -> MobileNetV3:
 class MobileNetV3_client_side(nn.Module):
     def __init__(self, args):
         super(MobileNetV3_client_side, self).__init__()
-        # Always default to large
-        inverted_residual_setting = Get_Arch("mobilenet_v3_large")
+        
+        assert 1 <= args.split_layer <= 4
+        
+        inverted_residual_setting = Get_Arch(args.arch)
+        
+        # building first layer
         first_conv_out_channels = inverted_residual_setting[0][0]
-        self.features = nn.Sequential(
+        self.layers = [
             Conv2dNormActivation(
                 in_channels=3,
                 out_channels=first_conv_out_channels,
@@ -929,65 +933,68 @@ class MobileNetV3_client_side(nn.Module):
                 stride=2,
                 activation_layer=nn.Hardswish,
             )
-        )
+        ]
 
-        assert 1 <= args.split_layer <= 4
-
-        self.layers = nn.ModuleList()
-        start_idx = 0
-        if args.split_layer >= 1:
-            end_idx = len(inverted_residual_setting) // 4
-            self.layers.append(self.make_layer(inverted_residual_setting, start_idx, end_idx))
-            start_idx = end_idx
+        # building inverted residual blocks
         if args.split_layer >= 2:
-            end_idx = len(inverted_residual_setting) // 2
-            self.layers.append(self.make_layer(inverted_residual_setting, start_idx, end_idx))
-            start_idx = end_idx
+            for params in inverted_residual_setting[:4]:
+                self.layers.append(InvertedResidual(*params))
+        
         if args.split_layer >= 3:
-            end_idx = len(inverted_residual_setting) * 3 // 4
-            self.layers.append(self.make_layer(inverted_residual_setting, start_idx, end_idx))
-            start_idx = end_idx
+            for params in inverted_residual_setting[4:7]:
+                self.layers.append(InvertedResidual(*params))
+        
         if args.split_layer >= 4:
-            end_idx = len(inverted_residual_setting)
-            self.layers.append(self.make_layer(inverted_residual_setting, start_idx, end_idx))
-
-    def make_layer(self, inverted_residual_setting, start_idx, end_idx):
-        layers = []
-        for params in inverted_residual_setting[start_idx:end_idx]:
-            layers.append(InvertedResidual(*params))
-        return nn.Sequential(*layers)
+            for params in inverted_residual_setting[7:]:
+                self.layers.append(InvertedResidual(*params))
+        
+        self.features = nn.Sequential(*self.layers)
 
     def forward(self, x):
         x = self.features(x)
-        for layer in self.layers:
-            x = layer(x)
         return x
 
-
 class MobileNetV3_server_side(nn.Module):
-    def __init__(self, args, num_classes=1000):
+    def __init__(self, args, num_classes=1000, dropout=0.2):
         super(MobileNetV3_server_side, self).__init__()
-        inverted_residual_setting = Get_Arch("mobilenet_v3_large")
-        last_channel = 1280
-        dropout = 0.2
-
-        self.layers = nn.ModuleList()
+        
+        assert 1 <= args.split_layer <= 4
+        
+        inverted_residual_setting = Get_Arch(args.arch)
+        
+        self.layers = []
+        
+        if args.split_layer < 2:
+            for params in inverted_residual_setting[:4]:
+                self.layers.append(InvertedResidual(*params))
+        
+        if args.split_layer < 3:
+            for params in inverted_residual_setting[4:7]:
+                self.layers.append(InvertedResidual(*params))
+        
         if args.split_layer < 4:
-            start_idx = len(inverted_residual_setting) * 3 // 4
-            end_idx = len(inverted_residual_setting)
-            self.layers.append(self.make_layer(inverted_residual_setting, start_idx, end_idx))
-
+            for params in inverted_residual_setting[7:]:
+                self.layers.append(InvertedResidual(*params))
+        
+        self.features = nn.Sequential(*self.layers)
+        
+        # building last several layers
         last_conv_in_channels = inverted_residual_setting[-1][3]
         last_conv_out_channels = 6 * last_conv_in_channels
-        self.layers.append(
-            Conv2dNormActivation(
-                in_channels=last_conv_in_channels,
-                out_channels=last_conv_out_channels,
-                kernel_size=1,
-                activation_layer=nn.Hardswish,
-            )
+        self.last_conv = Conv2dNormActivation(
+            in_channels=last_conv_in_channels,
+            out_channels=last_conv_out_channels,
+            kernel_size=1,
+            activation_layer=nn.Hardswish,
         )
-
+        
+        if args.arch == "mobilenet_v3_large":
+            last_channel = 1280  # C5
+        elif args.arch == "mobilenet_v3_small":
+            last_channel = 1024  # C5
+        else:
+            raise ValueError(f"Unsupported model type {args.arch}")
+        
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Sequential(
             nn.Linear(last_conv_out_channels, last_channel),
@@ -996,15 +1003,9 @@ class MobileNetV3_server_side(nn.Module):
             nn.Linear(last_channel, num_classes),
         )
 
-    def make_layer(self, inverted_residual_setting, start_idx, end_idx):
-        layers = []
-        for params in inverted_residual_setting[start_idx:end_idx]:
-            layers.append(InvertedResidual(*params))
-        return nn.Sequential(*layers)
-
     def forward(self, x):
-        for layer in self.layers:
-            x = layer(x)
+        x = self.features(x)
+        x = self.last_conv(x)
         x = self.avg_pool(x)
         x = torch.flatten(x, 1)
         x = self.classifier(x)
