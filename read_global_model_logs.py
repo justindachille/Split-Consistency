@@ -3,6 +3,9 @@ from ast import literal_eval
 import argparse
 import numpy as np
 
+
+DEBUG = False
+
 def calc_stats(group):
     stats_dict = {
         'mean_global_accuracy': group['Best Global Model Test'].mean() * 100,
@@ -53,8 +56,9 @@ df = df[(df['Params'].apply(lambda x: x['dataset'] == args.dataset_filter)) &
         (df['Params'].apply(lambda x: x['alg'] == args.alg)) &
         (df['Client ID'] == 0)]
 
-print("Filtered DataFrame based on specified criteria:")
-print(df.to_string(index=False))
+if DEBUG:
+    print("Filtered DataFrame based on specified criteria:")
+    print(df.to_string(index=False))
 
 groupby_columns = ['partition', 'split_layer']
 grouped = df.groupby(groupby_columns)
@@ -84,7 +88,7 @@ def print_latex_table(stats_df, partition):
     print(f"% Results for partition={partition}")
     print("\\begin{table}[h]")
     print("\\centering")
-    print(f"\\caption{{Training results for partition={partition}:}}")
+    print(f"\\caption{{Training results for data:{partition}, dataset: {args.dataset_filter}}}")
     print("\\begin{adjustbox}{max width=\\textwidth}")
     print("\\begin{tabular}{|l|c|c|c|} \\hline")
     headers = "Algorithm & Global Test Acc. & Global Top5 Test Acc. & Runs \\\\ \\hline"
