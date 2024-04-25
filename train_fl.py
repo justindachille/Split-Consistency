@@ -684,6 +684,7 @@ def run_experiment(seed, alpha, dataset, args):
     args_copy.seed = seed
     args_copy.alpha = alpha
     args_copy.dataset = dataset
+    args_copy.optimizer = lower(args.optimizer)
     hyperparams = {k: v for k, v in vars(args_copy).items()}
 
     if not os.path.isfile(args.accuracies_file):
