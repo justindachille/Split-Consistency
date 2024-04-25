@@ -35,7 +35,7 @@ from algs.moon import train_net_moon
 from algs.feduv import train_net_feduv
 from algs.sflv1 import train_client_v1
 from algs.sflv2 import train_client_v2
-from algs.fine_tuning import fine_tune
+from algs.fine_tuning import fine_tune, train_net
 
 from utils.calculate_acc import compute_accuracy, compute_accuracy_split_model
 
@@ -302,8 +302,16 @@ def main(args):
     
     best_global_train_top5 = 0.0
     best_global_test_top5 = 0.0
+    
+    if args.alg == 'centralized':
+        nets, _, _, _ = init_nets(1, args, device, n_classes)
+        net = nets[0]
+
+        _, _, best_global_test, best_global_test_top5 = fine_tune(net, train_dl_global, test_dl, test_dl, device, args, logger, max_patience=args.comm_round)
+
+    
     for round in range(n_comm_rounds):
-        if args.alg == 'local_training':
+        if args.alg == 'local_training' or args.alg == 'centralized':
             break
         
         print("\n\n************************************")
@@ -664,7 +672,8 @@ def main(args):
 
         # Write data rows
         for net_id in range(args.n_parties):
-            writer.writerow([net_id, best_local_accs[net_id], best_local_accs_top5[net_id], best_global_accs[net_id], best_global_accs_top5[net_id], best_global_train, best_global_test, best_global_train_top5, best_global_test_top5, hparams_str])
+            if net_id == 0:
+                writer.writerow([net_id, best_local_accs[net_id], best_local_accs_top5[net_id], best_global_accs[net_id], best_global_accs_top5[net_id], best_global_train, best_global_test, best_global_train_top5, best_global_test_top5, hparams_str])
         
 def run_experiment(seed, alpha, dataset, args):
     args_copy = copy.deepcopy(args)
@@ -675,11 +684,12 @@ def run_experiment(seed, alpha, dataset, args):
     args_copy.seed = seed
     args_copy.alpha = alpha
     args_copy.dataset = dataset
+    args_copy.optimizer = args_copy.optimizer.lower()
     hyperparams = {k: v for k, v in vars(args_copy).items()}
 
     if not os.path.isfile(args.accuracies_file):
         with open(args.accuracies_file, 'w', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=['Client ID', 'Best Local Accuracy', 'Best Local Accuracy Top-5', 'Best Global Accuracy', 'Best Global Accuracy Top-5', 'Best Global Model Train', 'Best Global Model Test', 'Best Global Model Train', 'Best Global Model Test', 'Hyperparameters'])
+            writer = csv.DictWriter(file, fieldnames=['Client ID', 'Best Local Accuracy', 'Best Local Accuracy Top-5', 'Best Global Accuracy', 'Best Global Accuracy Top-5', 'Best Global Model Train', 'Best Global Model Test', 'Best Global Model Train', 'Best Global Model Test Top-5', 'Hyperparameters'])
             writer.writeheader()
 
     if not args.dont_skip:
@@ -689,7 +699,7 @@ def run_experiment(seed, alpha, dataset, args):
             for row in reader:
 
                 saved_hyperparams = eval(row['Hyperparameters'])
-                exclude_keys = ['log_file_name', 'device']
+                exclude_keys = ['log_file_name', 'device', 'dont_skip', 'n_train_workers', 'n_test_workers']
                 if all(saved_hyperparams.get(k) == v for k, v in hyperparams.items() if k not in exclude_keys):
                     print(f"Skipping experiment with hyperparameters: {hyperparams}")
                     return
@@ -757,9 +767,6 @@ if __name__ == "__main__":
     parser.add_argument('--arch', type=str, default='mobilenet_v3_large', help='which mobilenetv3 architecture to use (default: mobilenet_v3_large), otherwise mobilenet_v3_small')   
 
     args = parser.parse_args()
-    print(args.dataset)
-    for dataset in args.dataset:
-        print(dataset)
     
     for seed in args.seed:
         for alpha in args.alpha:

@@ -31,10 +31,9 @@ def train_net(net, train_dl_local, optimizer, device, args):
 
     return train_acc, train_loss
 
-def fine_tune(net, train_dl_local, test_dl_local, test_dl_global, device, args, logger):
+def fine_tune(net, train_dl_local, test_dl_local, test_dl_global, device, args, logger, max_patience=3):
     print('dev', device)
     patience = 0
-    max_patience = 3
     best_acc = 0.0
     best_local_acc = 0.0
     best_local_acc_top5 = 0.0
@@ -52,7 +51,7 @@ def fine_tune(net, train_dl_local, test_dl_local, test_dl_global, device, args, 
     else:
         raise ValueError(f"Unsupported optimizer: {args.optimizer}")
 
-    for epoch in range(50):
+    for epoch in range(args.comm_round):
         train_acc, train_loss = train_net(net, train_dl_local, optimizer, device, args)
         local_test_acc, _, local_test_acc_top5 = compute_accuracy(net, test_dl_local, get_confusion_matrix=False, device=device)
         global_test_acc, _, global_test_acc_top5 = compute_accuracy(net, test_dl_global, get_confusion_matrix=False, device=device)
