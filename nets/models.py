@@ -595,10 +595,7 @@ class ResNet_50_server_side(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1,1))
         
         ### Projection head
-        if args.split_layer == 4:
-            num_ftrs = 2048
-        else:
-            num_ftrs = args.out_dim
+        num_ftrs = args.out_dim
         self.fc1 = nn.Linear(2048, num_ftrs)
         self.fc1_bn = nn.BatchNorm1d(num_ftrs)
         self.fc2 = nn.Linear(num_ftrs, num_ftrs)
