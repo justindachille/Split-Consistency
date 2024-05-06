@@ -2508,3 +2508,121 @@
 05-02 15:42 INFO     Client: 45 Epoch: 1 Loss: 1.615932 Loss1: 0.000000 Loss2: 0.000000
 05-02 15:42 INFO     Client: 45 Epoch: 2 Loss: 1.480190 Loss1: 0.000000 Loss2: 0.000000
 05-02 15:42 INFO     Client: 45 Epoch: 3 Loss: 1.436380 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 45 Epoch: 4 Loss: 1.402169 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO      ** Client: 45 Training complete **
+05-02 15:42 INFO     Training network 46 n_training: 1318
+05-02 15:42 INFO     Training network 46
+05-02 15:42 INFO     n_training: 21
+05-02 15:42 INFO     n_test: 157
+05-02 15:42 INFO     Client: 46 Epoch: 0 Loss: 2.242783 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 46 Epoch: 1 Loss: 1.594939 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 46 Epoch: 2 Loss: 1.514302 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 46 Epoch: 3 Loss: 1.472179 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 46 Epoch: 4 Loss: 1.439237 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO      ** Client: 46 Training complete **
+05-02 15:42 INFO     Training network 47 n_training: 1263
+05-02 15:42 INFO     Training network 47
+05-02 15:42 INFO     n_training: 20
+05-02 15:42 INFO     n_test: 157
+05-02 15:42 INFO     Client: 47 Epoch: 0 Loss: 1.993269 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 47 Epoch: 1 Loss: 1.197956 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 47 Epoch: 2 Loss: 1.124308 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 47 Epoch: 3 Loss: 1.044596 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 47 Epoch: 4 Loss: 1.026798 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO      ** Client: 47 Training complete **
+05-02 15:42 INFO     Training network 48 n_training: 1212
+05-02 15:42 INFO     Training network 48
+05-02 15:42 INFO     n_training: 19
+05-02 15:42 INFO     n_test: 157
+05-02 15:42 INFO     Client: 48 Epoch: 0 Loss: 1.768693 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 48 Epoch: 1 Loss: 0.845941 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 48 Epoch: 2 Loss: 0.771831 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 48 Epoch: 3 Loss: 0.687304 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 48 Epoch: 4 Loss: 0.712276 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO      ** Client: 48 Training complete **
+05-02 15:42 INFO     Training network 49 n_training: 1034
+05-02 15:42 INFO     Training network 49
+05-02 15:42 INFO     n_training: 17
+05-02 15:42 INFO     n_test: 157
+05-02 15:42 INFO     Client: 49 Epoch: 0 Loss: 1.970968 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 49 Epoch: 1 Loss: 1.090515 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 49 Epoch: 2 Loss: 0.940793 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:42 INFO     Client: 49 Epoch: 3 Loss: 0.934515 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 49 Epoch: 4 Loss: 0.856021 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO      ** Client: 49 Training complete **
+05-02 15:43 INFO     Training network 50 n_training: 924
+05-02 15:43 INFO     Training network 50
+05-02 15:43 INFO     n_training: 15
+05-02 15:43 INFO     n_test: 157
+05-02 15:43 INFO     Client: 50 Epoch: 0 Loss: 2.276193 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 50 Epoch: 1 Loss: 1.382250 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 50 Epoch: 2 Loss: 1.282237 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 50 Epoch: 3 Loss: 1.159048 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 50 Epoch: 4 Loss: 1.078542 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO      ** Client: 50 Training complete **
+05-02 15:43 INFO     Training network 51 n_training: 1076
+05-02 15:43 INFO     Training network 51
+05-02 15:43 INFO     n_training: 17
+05-02 15:43 INFO     n_test: 157
+05-02 15:43 INFO     Client: 51 Epoch: 0 Loss: 2.283353 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 51 Epoch: 1 Loss: 1.467373 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 51 Epoch: 2 Loss: 1.395318 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 51 Epoch: 3 Loss: 1.325964 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 51 Epoch: 4 Loss: 1.228746 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO      ** Client: 51 Training complete **
+05-02 15:43 INFO     Training network 52 n_training: 492
+05-02 15:43 INFO     Training network 52
+05-02 15:43 INFO     n_training: 8
+05-02 15:43 INFO     n_test: 157
+05-02 15:43 INFO     Client: 52 Epoch: 0 Loss: 2.580297 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 52 Epoch: 1 Loss: 1.004843 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 52 Epoch: 2 Loss: 0.845370 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 52 Epoch: 3 Loss: 0.756480 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 52 Epoch: 4 Loss: 0.691897 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO      ** Client: 52 Training complete **
+05-02 15:43 INFO     Training network 53 n_training: 548
+05-02 15:43 INFO     Training network 53
+05-02 15:43 INFO     n_training: 9
+05-02 15:43 INFO     n_test: 157
+05-02 15:43 INFO     Client: 53 Epoch: 0 Loss: 2.487270 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 53 Epoch: 1 Loss: 1.007549 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 53 Epoch: 2 Loss: 0.832508 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 53 Epoch: 3 Loss: 0.809110 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 53 Epoch: 4 Loss: 0.764513 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO      ** Client: 53 Training complete **
+05-02 15:43 INFO     Training network 54 n_training: 1049
+05-02 15:43 INFO     Training network 54
+05-02 15:43 INFO     n_training: 17
+05-02 15:43 INFO     n_test: 157
+05-02 15:43 INFO     Client: 54 Epoch: 0 Loss: 2.086208 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 54 Epoch: 1 Loss: 1.270432 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 54 Epoch: 2 Loss: 1.149441 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 54 Epoch: 3 Loss: 1.098602 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 54 Epoch: 4 Loss: 1.011030 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO      ** Client: 54 Training complete **
+05-02 15:43 INFO     Training network 55 n_training: 1052
+05-02 15:43 INFO     Training network 55
+05-02 15:43 INFO     n_training: 17
+05-02 15:43 INFO     n_test: 157
+05-02 15:43 INFO     Client: 55 Epoch: 0 Loss: 1.978451 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 55 Epoch: 1 Loss: 1.203219 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 55 Epoch: 2 Loss: 1.082697 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 55 Epoch: 3 Loss: 1.040824 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 55 Epoch: 4 Loss: 0.976287 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO      ** Client: 55 Training complete **
+05-02 15:43 INFO     Training network 56 n_training: 1132
+05-02 15:43 INFO     Training network 56
+05-02 15:43 INFO     n_training: 18
+05-02 15:43 INFO     n_test: 157
+05-02 15:43 INFO     Client: 56 Epoch: 0 Loss: 2.291761 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 56 Epoch: 1 Loss: 1.600028 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 56 Epoch: 2 Loss: 1.514848 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 56 Epoch: 3 Loss: 1.469378 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 56 Epoch: 4 Loss: 1.402606 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO      ** Client: 56 Training complete **
+05-02 15:43 INFO     Training network 57 n_training: 866
+05-02 15:43 INFO     Training network 57
+05-02 15:43 INFO     n_training: 14
+05-02 15:43 INFO     n_test: 157
+05-02 15:43 INFO     Client: 57 Epoch: 0 Loss: 2.144585 Loss1: 0.000000 Loss2: 0.000000
+05-02 15:43 INFO     Client: 57 Epoch: 1 Loss: 1.097298 Loss1: 0.000000 Loss2: 0.000000
