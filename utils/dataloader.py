@@ -16,6 +16,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import copy
 from collections import Counter
+from tqdm import tqdm
+
 
 def record_net_data_stats(y_train, net_dataidx_map, logdir, logger):
     net_cls_counts = {}
@@ -177,7 +179,6 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
 
         N = y_train.shape[0]
         net_dataidx_map = {}
-
         while min_size < min_require_size:
             idx_batch = [[] for _ in range(n_parties)]
             for k in range(K):
@@ -194,7 +195,6 @@ def partition_data(args, dataset, datadir, logdir, partition, n_parties, beta=0.
                 assert(args.n_parties == 2)
                 idx_batch[0] = np.random.choice(idx_batch[0], size=5000, replace=False)
                 idx_batch[1] = np.random.choice(idx_batch[1], size=8000, replace=False)
-
 
         for j in range(n_parties):
             np.random.shuffle(idx_batch[j])
@@ -325,12 +325,12 @@ def load_ham10000_data(args, datadir):
     ham10000_test = HAM10000(datadir, transform=transform, train=False)
 
     X_train, y_train = [], []
-    for img, target in ham10000_train:
+    for img, target in tqdm(ham10000_train, desc="Loading train data"):
         X_train.append(img)
         y_train.append(target)
 
     X_test, y_test = [], []
-    for img, target in ham10000_test:
+    for img, target in tqdm(ham10000_test, desc="Loading test data"):
         X_test.append(img)
         y_test.append(target)
 
@@ -501,7 +501,7 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
 
         
         train_ds = DatasetSplit(train_ds, dataidxs)
-        should_drop_last = True if ds_name == 'cifar100' else False
+        should_drop_last = True if ds_name == 'cifar100' or ds_name == 'cifar10' else False
         train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=should_drop_last, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         

@@ -1,0 +1,567 @@
+05-06 13:34 INFO     cuda
+05-06 13:34 INFO     Command Line Arguments: 
+{
+    "epochs": 5,
+    "comm_round": 300,
+    "sample_fraction": 1.0,
+    "alpha": 0.01,
+    "dataset": "cifar100",
+    "datadir": "../data/",
+    "partition": "iid",
+    "alg": "sflv1",
+    "model": "resnet-50",
+    "split_layer": 2,
+    "n_parties": 10,
+    "lr": 0.001,
+    "mu": 1,
+    "std_coeff": 2.5,
+    "unif_coeff": 0.5,
+    "batch_size": 64,
+    "load_first_net": 1,
+    "pool_option": "FIFO",
+    "model_buffer_size": 1,
+    "optimizer": "adam",
+    "simp_width": 1,
+    "out_dim": 256,
+    "reg": 0.0005,
+    "temperature": 0.5,
+    "logdir": "./",
+    "log_file_name": "logs/experiment_log-alg=sflv1_partition=iid_lr=0.001_epochs=5_num_users=10_beta=0.01_batch_size=64_opt=adam_dataset=cifar100_2024-05-06-1334-03",
+    "seed": 12,
+    "device": "cuda:0",
+    "accuracies_file": "logs/resnet_50_10_users_300_epochs.csv",
+    "dont_skip": false,
+    "n_train_workers": 1,
+    "n_test_workers": 1,
+    "arch": "mobilenet_v3_large",
+    "multiprocessing": 0
+}
+05-06 13:34 INFO     Data statistics: {0: {0: 48, 1: 59, 2: 57, 3: 43, 4: 64, 5: 59, 6: 45, 7: 50, 8: 32, 9: 64, 10: 55, 11: 42, 12: 47, 13: 58, 14: 42, 15: 35, 16: 55, 17: 43, 18: 52, 19: 49, 20: 34, 21: 58, 22: 52, 23: 47, 24: 43, 25: 49, 26: 41, 27: 54, 28: 33, 29: 55, 30: 48, 31: 49, 32: 61, 33: 53, 34: 48, 35: 55, 36: 62, 37: 48, 38: 45, 39: 54, 40: 53, 41: 48, 42: 52, 43: 51, 44: 44, 45: 47, 46: 48, 47: 49, 48: 45, 49: 40, 50: 51, 51: 56, 52: 57, 53: 48, 54: 67, 55: 48, 56: 49, 57: 46, 58: 49, 59: 54, 60: 46, 61: 57, 62: 49, 63: 44, 64: 47, 65: 66, 66: 48, 67: 47, 68: 50, 69: 48, 70: 58, 71: 45, 72: 53, 73: 51, 74: 57, 75: 50, 76: 58, 77: 47, 78: 41, 79: 46, 80: 48, 81: 46, 82: 46, 83: 57, 84: 53, 85: 54, 86: 64, 87: 55, 88: 56, 89: 51, 90: 47, 91: 52, 92: 45, 93: 42, 94: 46, 95: 52, 96: 56, 97: 39, 98: 50, 99: 43}, 1: {0: 38, 1: 45, 2: 45, 3: 53, 4: 55, 5: 53, 6: 41, 7: 46, 8: 54, 9: 51, 10: 49, 11: 34, 12: 46, 13: 45, 14: 49, 15: 55, 16: 47, 17: 38, 18: 46, 19: 56, 20: 61, 21: 45, 22: 43, 23: 57, 24: 58, 25: 46, 26: 50, 27: 54, 28: 48, 29: 45, 30: 47, 31: 53, 32: 47, 33: 52, 34: 57, 35: 57, 36: 57, 37: 46, 38: 63, 39: 37, 40: 49, 41: 45, 42: 65, 43: 48, 44: 60, 45: 49, 46: 58, 47: 48, 48: 57, 49: 52, 50: 48, 51: 46, 52: 53, 53: 56, 54: 45, 55: 51, 56: 49, 57: 47, 58: 51, 59: 55, 60: 55, 61: 47, 62: 40, 63: 56, 64: 46, 65: 48, 66: 46, 67: 46, 68: 53, 69: 46, 70: 42, 71: 49, 72: 50, 73: 40, 74: 54, 75: 42, 76: 52, 77: 58, 78: 52, 79: 52, 80: 48, 81: 53, 82: 50, 83: 41, 84: 53, 85: 53, 86: 46, 87: 56, 88: 53, 89: 60, 90: 50, 91: 55, 92: 46, 93: 51, 94: 51, 95: 53, 96: 53, 97: 46, 98: 54, 99: 53}, 2: {0: 43, 1: 45, 2: 45, 3: 44, 4: 43, 5: 57, 6: 50, 7: 54, 8: 56, 9: 45, 10: 52, 11: 43, 12: 58, 13: 58, 14: 42, 15: 53, 16: 49, 17: 45, 18: 63, 19: 38, 20: 47, 21: 38, 22: 44, 23: 57, 24: 47, 25: 53, 26: 51, 27: 55, 28: 64, 29: 46, 30: 53, 31: 70, 32: 44, 33: 53, 34: 55, 35: 55, 36: 49, 37: 51, 38: 45, 39: 60, 40: 60, 41: 55, 42: 39, 43: 47, 44: 41, 45: 50, 46: 51, 47: 49, 48: 51, 49: 57, 50: 49, 51: 52, 52: 48, 53: 40, 54: 55, 55: 56, 56: 55, 57: 42, 58: 63, 59: 51, 60: 35, 61: 46, 62: 49, 63: 52, 64: 63, 65: 51, 66: 59, 67: 48, 68: 39, 69: 56, 70: 58, 71: 44, 72: 38, 73: 41, 74: 46, 75: 48, 76: 47, 77: 44, 78: 52, 79: 56, 80: 54, 81: 64, 82: 47, 83: 48, 84: 48, 85: 49, 86: 53, 87: 56, 88: 47, 89: 49, 90: 48, 91: 46, 92: 51, 93: 54, 94: 53, 95: 40, 96: 48, 97: 50, 98: 43, 99: 49}, 3: {0: 48, 1: 48, 2: 54, 3: 45, 4: 45, 5: 43, 6: 51, 7: 60, 8: 46, 9: 47, 10: 39, 11: 60, 12: 54, 13: 50, 14: 49, 15: 53, 16: 70, 17: 52, 18: 45, 19: 43, 20: 48, 21: 56, 22: 42, 23: 53, 24: 63, 25: 48, 26: 43, 27: 48, 28: 49, 29: 39, 30: 46, 31: 49, 32: 40, 33: 50, 34: 51, 35: 50, 36: 40, 37: 43, 38: 44, 39: 51, 40: 51, 41: 43, 42: 63, 43: 46, 44: 53, 45: 51, 46: 60, 47: 48, 48: 45, 49: 42, 50: 50, 51: 50, 52: 45, 53: 55, 54: 52, 55: 46, 56: 53, 57: 50, 58: 50, 59: 61, 60: 51, 61: 49, 62: 65, 63: 46, 64: 43, 65: 43, 66: 43, 67: 50, 68: 66, 69: 45, 70: 51, 71: 52, 72: 56, 73: 59, 74: 60, 75: 59, 76: 59, 77: 38, 78: 49, 79: 41, 80: 53, 81: 48, 82: 50, 83: 62, 84: 53, 85: 52, 86: 48, 87: 35, 88: 47, 89: 55, 90: 64, 91: 67, 92: 50, 93: 57, 94: 42, 95: 45, 96: 35, 97: 57, 98: 46, 99: 40}, 4: {0: 70, 1: 48, 2: 47, 3: 42, 4: 36, 5: 41, 6: 67, 7: 50, 8: 43, 9: 38, 10: 54, 11: 54, 12: 56, 13: 52, 14: 52, 15: 53, 16: 50, 17: 49, 18: 43, 19: 46, 20: 51, 21: 43, 22: 58, 23: 42, 24: 49, 25: 39, 26: 52, 27: 40, 28: 52, 29: 50, 30: 46, 31: 50, 32: 38, 33: 53, 34: 51, 35: 49, 36: 51, 37: 49, 38: 51, 39: 53, 40: 48, 41: 48, 42: 45, 43: 49, 44: 50, 45: 57, 46: 52, 47: 50, 48: 61, 49: 51, 50: 37, 51: 54, 52: 46, 53: 62, 54: 52, 55: 49, 56: 39, 57: 71, 58: 53, 59: 44, 60: 61, 61: 54, 62: 54, 63: 62, 64: 47, 65: 57, 66: 62, 67: 54, 68: 56, 69: 45, 70: 61, 71: 40, 72: 48, 73: 47, 74: 54, 75: 44, 76: 41, 77: 45, 78: 52, 79: 49, 80: 46, 81: 53, 82: 52, 83: 62, 84: 42, 85: 56, 86: 50, 87: 46, 88: 51, 89: 54, 90: 40, 91: 44, 92: 59, 93: 45, 94: 40, 95: 47, 96: 53, 97: 58, 98: 46, 99: 47}, 5: {0: 40, 1: 45, 2: 49, 3: 54, 4: 49, 5: 51, 6: 54, 7: 54, 8: 60, 9: 61, 10: 61, 11: 54, 12: 45, 13: 35, 14: 40, 15: 42, 16: 51, 17: 60, 18: 58, 19: 61, 20: 54, 21: 55, 22: 49, 23: 54, 24: 57, 25: 53, 26: 49, 27: 54, 28: 57, 29: 56, 30: 53, 31: 51, 32: 53, 33: 39, 34: 58, 35: 49, 36: 47, 37: 57, 38: 60, 39: 40, 40: 36, 41: 49, 42: 51, 43: 41, 44: 45, 45: 50, 46: 47, 47: 51, 48: 45, 49: 43, 50: 54, 51: 51, 52: 53, 53: 49, 54: 49, 55: 35, 56: 49, 57: 59, 58: 51, 59: 54, 60: 57, 61: 50, 62: 31, 63: 40, 64: 47, 65: 43, 66: 55, 67: 44, 68: 51, 69: 39, 70: 51, 71: 64, 72: 53, 73: 53, 74: 45, 75: 39, 76: 57, 77: 52, 78: 46, 79: 58, 80: 47, 81: 46, 82: 51, 83: 47, 84: 50, 85: 57, 86: 41, 87: 55, 88: 43, 89: 45, 90: 52, 91: 48, 92: 45, 93: 52, 94: 56, 95: 54, 96: 53, 97: 47, 98: 58, 99: 47}, 6: {0: 54, 1: 60, 2: 53, 3: 54, 4: 55, 5: 52, 6: 40, 7: 41, 8: 54, 9: 36, 10: 42, 11: 56, 12: 53, 13: 51, 14: 63, 15: 47, 16: 42, 17: 50, 18: 48, 19: 56, 20: 51, 21: 50, 22: 48, 23: 42, 24: 49, 25: 57, 26: 44, 27: 45, 28: 48, 29: 51, 30: 56, 31: 49, 32: 54, 33: 49, 34: 50, 35: 49, 36: 47, 37: 47, 38: 47, 39: 62, 40: 39, 41: 47, 42: 46, 43: 54, 44: 64, 45: 44, 46: 42, 47: 42, 48: 48, 49: 58, 50: 54, 51: 42, 52: 39, 53: 53, 54: 38, 55: 45, 56: 48, 57: 41, 58: 44, 59: 47, 60: 50, 61: 57, 62: 60, 63: 46, 64: 51, 65: 44, 66: 43, 67: 48, 68: 44, 69: 51, 70: 41, 71: 56, 72: 50, 73: 56, 74: 43, 75: 59, 76: 57, 77: 56, 78: 51, 79: 56, 80: 52, 81: 43, 82: 45, 83: 43, 84: 58, 85: 52, 86: 44, 87: 48, 88: 57, 89: 46, 90: 50, 91: 61, 92: 51, 93: 53, 94: 57, 95: 51, 96: 53, 97: 64, 98: 47, 99: 69}, 7: {0: 50, 1: 45, 2: 44, 3: 59, 4: 53, 5: 44, 6: 65, 7: 48, 8: 39, 9: 52, 10: 51, 11: 59, 12: 38, 13: 57, 14: 49, 15: 56, 16: 38, 17: 57, 18: 53, 19: 51, 20: 45, 21: 47, 22: 53, 23: 56, 24: 46, 25: 53, 26: 59, 27: 52, 28: 47, 29: 58, 30: 55, 31: 43, 32: 60, 33: 55, 34: 39, 35: 43, 36: 53, 37: 48, 38: 61, 39: 48, 40: 48, 41: 54, 42: 55, 43: 59, 44: 54, 45: 58, 46: 47, 47: 65, 48: 51, 49: 44, 50: 52, 51: 48, 52: 55, 53: 42, 54: 51, 55: 54, 56: 48, 57: 43, 58: 42, 59: 37, 60: 39, 61: 41, 62: 47, 63: 52, 64: 51, 65: 58, 66: 38, 67: 47, 68: 46, 69: 48, 70: 41, 71: 48, 72: 51, 73: 51, 74: 39, 75: 55, 76: 41, 77: 51, 78: 58, 79: 53, 80: 49, 81: 49, 82: 62, 83: 44, 84: 48, 85: 52, 86: 52, 87: 49, 88: 54, 89: 52, 90: 52, 91: 39, 92: 49, 93: 52, 94: 55, 95: 56, 96: 43, 97: 43, 98: 49, 99: 60}, 8: {0: 56, 1: 49, 2: 55, 3: 51, 4: 53, 5: 57, 6: 49, 7: 50, 8: 56, 9: 36, 10: 44, 11: 41, 12: 59, 13: 45, 14: 65, 15: 52, 16: 48, 17: 53, 18: 51, 19: 47, 20: 49, 21: 52, 22: 60, 23: 56, 24: 45, 25: 52, 26: 55, 27: 44, 28: 49, 29: 50, 30: 49, 31: 42, 32: 60, 33: 47, 34: 49, 35: 40, 36: 47, 37: 55, 38: 42, 39: 47, 40: 58, 41: 44, 42: 46, 43: 47, 44: 47, 45: 48, 46: 51, 47: 44, 48: 53, 49: 51, 50: 50, 51: 51, 52: 55, 53: 49, 54: 45, 55: 64, 56: 57, 57: 52, 58: 57, 59: 41, 60: 55, 61: 44, 62: 54, 63: 43, 64: 58, 65: 40, 66: 55, 67: 49, 68: 44, 69: 67, 70: 46, 71: 61, 72: 46, 73: 52, 74: 41, 75: 55, 76: 48, 77: 53, 78: 48, 79: 48, 80: 44, 81: 48, 82: 45, 83: 45, 84: 41, 85: 30, 86: 52, 87: 56, 88: 46, 89: 46, 90: 53, 91: 46, 92: 47, 93: 54, 94: 46, 95: 49, 96: 64, 97: 53, 98: 66, 99: 45}, 9: {0: 53, 1: 56, 2: 51, 3: 55, 4: 47, 5: 43, 6: 38, 7: 47, 8: 60, 9: 70, 10: 53, 11: 57, 12: 44, 13: 49, 14: 49, 15: 54, 16: 50, 17: 53, 18: 41, 19: 53, 20: 60, 21: 56, 22: 51, 23: 36, 24: 43, 25: 50, 26: 56, 27: 54, 28: 53, 29: 50, 30: 47, 31: 44, 32: 43, 33: 49, 34: 42, 35: 53, 36: 47, 37: 56, 38: 42, 39: 48, 40: 58, 41: 67, 42: 38, 43: 58, 44: 42, 45: 46, 46: 44, 47: 54, 48: 44, 49: 62, 50: 55, 51: 50, 52: 49, 53: 46, 54: 46, 55: 52, 56: 53, 57: 49, 58: 40, 59: 56, 60: 51, 61: 55, 62: 51, 63: 59, 64: 47, 65: 50, 66: 51, 67: 67, 68: 51, 69: 55, 70: 51, 71: 41, 72: 55, 73: 50, 74: 61, 75: 49, 76: 40, 77: 56, 78: 51, 79: 41, 80: 59, 81: 50, 82: 52, 83: 51, 84: 54, 85: 45, 86: 50, 87: 44, 88: 46, 89: 42, 90: 44, 91: 42, 92: 57, 93: 40, 94: 54, 95: 53, 96: 42, 97: 43, 98: 41, 99: 47}}
+05-06 13:34 INFO     in comm round:0
+05-06 13:34 INFO     Training network 0 n_training: 5000
+05-06 13:34 INFO     Training network 0
+05-06 13:34 INFO     Client: 0 Epoch: 0 Loss: 4.549644286815937
+05-06 13:34 INFO     Client: 0 Epoch: 1 Loss: 4.4003550578386355
+05-06 13:34 INFO     Client: 0 Epoch: 2 Loss: 4.283497492472331
+05-06 13:34 INFO     Client: 0 Epoch: 3 Loss: 4.167629685157385
+05-06 13:34 INFO     Client: 0 Epoch: 4 Loss: 4.097320504677602
+05-06 13:34 INFO      ** Client: 0 Training complete **
+05-06 13:34 INFO     Training network 1 n_training: 5000
+05-06 13:34 INFO     Training network 1
+05-06 13:34 INFO     Client: 1 Epoch: 0 Loss: 4.578495802023472
+05-06 13:34 INFO     Client: 1 Epoch: 1 Loss: 4.419844816892575
+05-06 13:34 INFO     Client: 1 Epoch: 2 Loss: 4.3388663071852465
+05-06 13:34 INFO     Client: 1 Epoch: 3 Loss: 4.247959017753601
+05-06 13:34 INFO     Client: 1 Epoch: 4 Loss: 4.158913881350786
+05-06 13:34 INFO      ** Client: 1 Training complete **
+05-06 13:34 INFO     Training network 2 n_training: 5000
+05-06 13:34 INFO     Training network 2
+05-06 13:34 INFO     Client: 2 Epoch: 0 Loss: 4.580554424188076
+05-06 13:34 INFO     Client: 2 Epoch: 1 Loss: 4.445092085080269
+05-06 13:34 INFO     Client: 2 Epoch: 2 Loss: 4.307904139543191
+05-06 13:34 INFO     Client: 2 Epoch: 3 Loss: 4.206232792291885
+05-06 13:34 INFO     Client: 2 Epoch: 4 Loss: 4.1146456981316595
+05-06 13:34 INFO      ** Client: 2 Training complete **
+05-06 13:34 INFO     Training network 3 n_training: 5000
+05-06 13:34 INFO     Training network 3
+05-06 13:34 INFO     Client: 3 Epoch: 0 Loss: 4.552879406855657
+05-06 13:34 INFO     Client: 3 Epoch: 1 Loss: 4.389153401056926
+05-06 13:34 INFO     Client: 3 Epoch: 2 Loss: 4.2846977466192
+05-06 13:34 INFO     Client: 3 Epoch: 3 Loss: 4.210140399443797
+05-06 13:34 INFO     Client: 3 Epoch: 4 Loss: 4.1444632181754475
+05-06 13:34 INFO      ** Client: 3 Training complete **
+05-06 13:34 INFO     Training network 4 n_training: 5000
+05-06 13:34 INFO     Training network 4
+05-06 13:34 INFO     Client: 4 Epoch: 0 Loss: 4.562277207007775
+05-06 13:34 INFO     Client: 4 Epoch: 1 Loss: 4.399747243294349
+05-06 13:35 INFO     Client: 4 Epoch: 2 Loss: 4.293601830800374
+05-06 13:35 INFO     Client: 4 Epoch: 3 Loss: 4.221274443161794
+05-06 13:35 INFO     Client: 4 Epoch: 4 Loss: 4.139043557338225
+05-06 13:35 INFO      ** Client: 4 Training complete **
+05-06 13:35 INFO     Training network 5 n_training: 5000
+05-06 13:35 INFO     Training network 5
+05-06 13:35 INFO     Client: 5 Epoch: 0 Loss: 4.5792813790150175
+05-06 13:35 INFO     Client: 5 Epoch: 1 Loss: 4.430070999341133
+05-06 13:35 INFO     Client: 5 Epoch: 2 Loss: 4.300106623233893
+05-06 13:35 INFO     Client: 5 Epoch: 3 Loss: 4.1913458445133305
+05-06 13:35 INFO     Client: 5 Epoch: 4 Loss: 4.097244809835385
+05-06 13:35 INFO      ** Client: 5 Training complete **
+05-06 13:35 INFO     Training network 6 n_training: 5000
+05-06 13:35 INFO     Training network 6
+05-06 13:35 INFO     Client: 6 Epoch: 0 Loss: 4.549214265285394
+05-06 13:35 INFO     Client: 6 Epoch: 1 Loss: 4.391727704268235
+05-06 13:35 INFO     Client: 6 Epoch: 2 Loss: 4.26665275830489
+05-06 13:35 INFO     Client: 6 Epoch: 3 Loss: 4.1826556126276655
+05-06 13:35 INFO     Client: 6 Epoch: 4 Loss: 4.0892387964786625
+05-06 13:35 INFO      ** Client: 6 Training complete **
+05-06 13:35 INFO     Training network 7 n_training: 5000
+05-06 13:35 INFO     Training network 7
+05-06 13:35 INFO     Client: 7 Epoch: 0 Loss: 4.575132431128086
+05-06 13:35 INFO     Client: 7 Epoch: 1 Loss: 4.429875477766379
+05-06 13:35 INFO     Client: 7 Epoch: 2 Loss: 4.314470975826948
+05-06 13:35 INFO     Client: 7 Epoch: 3 Loss: 4.202232149931101
+05-06 13:35 INFO     Client: 7 Epoch: 4 Loss: 4.131402526146326
+05-06 13:35 INFO      ** Client: 7 Training complete **
+05-06 13:35 INFO     Training network 8 n_training: 5000
+05-06 13:35 INFO     Training network 8
+05-06 13:35 INFO     Client: 8 Epoch: 0 Loss: 4.597261282113882
+05-06 13:35 INFO     Client: 8 Epoch: 1 Loss: 4.450706439140515
+05-06 13:35 INFO     Client: 8 Epoch: 2 Loss: 4.375614416904939
+05-06 13:35 INFO     Client: 8 Epoch: 3 Loss: 4.226433429962549
+05-06 13:35 INFO     Client: 8 Epoch: 4 Loss: 4.102477681942475
+05-06 13:35 INFO      ** Client: 8 Training complete **
+05-06 13:35 INFO     Training network 9 n_training: 5000
+05-06 13:35 INFO     Training network 9
+05-06 13:35 INFO     Client: 9 Epoch: 0 Loss: 4.562767303906954
+05-06 13:35 INFO     Client: 9 Epoch: 1 Loss: 4.42504533743247
+05-06 13:35 INFO     Client: 9 Epoch: 2 Loss: 4.3060964559897394
+05-06 13:35 INFO     Client: 9 Epoch: 3 Loss: 4.209613561630249
+05-06 13:36 INFO     Client: 9 Epoch: 4 Loss: 4.128471646553431
+05-06 13:36 INFO      ** Client: 9 Training complete **
+05-06 13:36 INFO     global n_training: 781
+05-06 13:36 INFO     global n_test: 157
+05-06 13:36 INFO     >> Global Model Train accuracy: 0.0100, Train accuracy top-5: 0.0500
+05-06 13:36 INFO     >> Global Model Test accuracy: 0.0100, Test accuracy top-5: 0.0500
+05-06 13:36 INFO     >> Global Model Train loss: 4.6612
+05-06 13:36 INFO     in comm round:1
+05-06 13:36 INFO     Training network 0 n_training: 5000
+05-06 13:36 INFO     Training network 0
+05-06 13:36 INFO     Client: 0 Epoch: 0 Loss: 4.2526661188174515
+05-06 13:36 INFO     Client: 0 Epoch: 1 Loss: 4.111306792650467
+05-06 13:36 INFO     Client: 0 Epoch: 2 Loss: 4.0405446871733055
+05-06 13:36 INFO     Client: 0 Epoch: 3 Loss: 4.000890013499138
+05-06 13:36 INFO     Client: 0 Epoch: 4 Loss: 3.9378462601930666
+05-06 13:36 INFO      ** Client: 0 Training complete **
+05-06 13:36 INFO     Training network 1 n_training: 5000
+05-06 13:36 INFO     Training network 1
+05-06 13:36 INFO     Client: 1 Epoch: 0 Loss: 4.265491782090603
+05-06 13:36 INFO     Client: 1 Epoch: 1 Loss: 4.1202187568713455
+05-06 13:36 INFO     Client: 1 Epoch: 2 Loss: 4.071233721879812
+05-06 13:36 INFO     Client: 1 Epoch: 3 Loss: 3.982787401248247
+05-06 13:36 INFO     Client: 1 Epoch: 4 Loss: 3.966091583936642
+05-06 13:36 INFO      ** Client: 1 Training complete **
+05-06 13:36 INFO     Training network 2 n_training: 5000
+05-06 13:36 INFO     Training network 2
+05-06 13:36 INFO     Client: 2 Epoch: 0 Loss: 4.277332446514031
+05-06 13:36 INFO     Client: 2 Epoch: 1 Loss: 4.147790973003094
+05-06 13:36 INFO     Client: 2 Epoch: 2 Loss: 4.078113418359023
+05-06 13:36 INFO     Client: 2 Epoch: 3 Loss: 4.012634885616792
+05-06 13:36 INFO     Client: 2 Epoch: 4 Loss: 3.9839905072481203
+05-06 13:36 INFO      ** Client: 2 Training complete **
+05-06 13:36 INFO     Training network 3 n_training: 5000
+05-06 13:36 INFO     Training network 3
+05-06 13:36 INFO     Client: 3 Epoch: 0 Loss: 4.253764965595344
+05-06 13:36 INFO     Client: 3 Epoch: 1 Loss: 4.112692267466814
+05-06 13:36 INFO     Client: 3 Epoch: 2 Loss: 4.043374550648225
+05-06 13:37 INFO     Client: 3 Epoch: 3 Loss: 3.9769186881872325
+05-06 13:37 INFO     Client: 3 Epoch: 4 Loss: 3.9393093372002626
+05-06 13:37 INFO      ** Client: 3 Training complete **
+05-06 13:37 INFO     Training network 4 n_training: 5000
+05-06 13:37 INFO     Training network 4
+05-06 13:37 INFO     Client: 4 Epoch: 0 Loss: 4.22621303032606
+05-06 13:37 INFO     Client: 4 Epoch: 1 Loss: 4.089091441570184
+05-06 13:37 INFO     Client: 4 Epoch: 2 Loss: 4.023659498263628
+05-06 13:37 INFO     Client: 4 Epoch: 3 Loss: 3.989259328597631
+05-06 13:37 INFO     Client: 4 Epoch: 4 Loss: 3.953122432415302
+05-06 13:37 INFO      ** Client: 4 Training complete **
+05-06 13:37 INFO     Training network 5 n_training: 5000
+05-06 13:37 INFO     Training network 5
+05-06 13:37 INFO     Client: 5 Epoch: 0 Loss: 4.252561563100571
+05-06 13:37 INFO     Client: 5 Epoch: 1 Loss: 4.111689035709087
+05-06 13:37 INFO     Client: 5 Epoch: 2 Loss: 4.025047445908571
+05-06 13:37 INFO     Client: 5 Epoch: 3 Loss: 3.9672127473048673
+05-06 13:37 INFO     Client: 5 Epoch: 4 Loss: 3.9423646346116676
+05-06 13:37 INFO      ** Client: 5 Training complete **
+05-06 13:37 INFO     Training network 6 n_training: 5000
+05-06 13:37 INFO     Training network 6
+05-06 13:37 INFO     Client: 6 Epoch: 0 Loss: 4.22188117259588
+05-06 13:37 INFO     Client: 6 Epoch: 1 Loss: 4.075935972042573
+05-06 13:37 INFO     Client: 6 Epoch: 2 Loss: 4.0151465856111965
+05-06 13:37 INFO     Client: 6 Epoch: 3 Loss: 3.969934879205166
+05-06 13:37 INFO     Client: 6 Epoch: 4 Loss: 3.9234813360067515
+05-06 13:37 INFO      ** Client: 6 Training complete **
+05-06 13:37 INFO     Training network 7 n_training: 5000
+05-06 13:37 INFO     Training network 7
+05-06 13:37 INFO     Client: 7 Epoch: 0 Loss: 4.256004305986258
+05-06 13:37 INFO     Client: 7 Epoch: 1 Loss: 4.123096453837859
+05-06 13:37 INFO     Client: 7 Epoch: 2 Loss: 4.055411519148411
+05-06 13:37 INFO     Client: 7 Epoch: 3 Loss: 4.0202131026830425
+05-06 13:38 INFO     Client: 7 Epoch: 4 Loss: 3.983258076203175
+05-06 13:38 INFO      ** Client: 7 Training complete **
+05-06 13:38 INFO     Training network 8 n_training: 5000
+05-06 13:38 INFO     Training network 8
+05-06 13:38 INFO     Client: 8 Epoch: 0 Loss: 4.248661044316414
+05-06 13:38 INFO     Client: 8 Epoch: 1 Loss: 4.077899657762968
+05-06 13:38 INFO     Client: 8 Epoch: 2 Loss: 4.038154715146774
+05-06 13:38 INFO     Client: 8 Epoch: 3 Loss: 3.9838501704044833
+05-06 13:38 INFO     Client: 8 Epoch: 4 Loss: 3.9486195032413187
+05-06 13:38 INFO      ** Client: 8 Training complete **
+05-06 13:38 INFO     Training network 9 n_training: 5000
+05-06 13:38 INFO     Training network 9
+05-06 13:38 INFO     Client: 9 Epoch: 0 Loss: 4.268231734251365
+05-06 13:38 INFO     Client: 9 Epoch: 1 Loss: 4.132721262100415
+05-06 13:38 INFO     Client: 9 Epoch: 2 Loss: 4.069522799589695
+05-06 13:38 INFO     Client: 9 Epoch: 3 Loss: 4.044201872287652
+05-06 13:38 INFO     Client: 9 Epoch: 4 Loss: 3.972738810074635
+05-06 13:38 INFO      ** Client: 9 Training complete **
+05-06 13:38 INFO     global n_training: 781
+05-06 13:38 INFO     global n_test: 157
+05-06 13:38 INFO     >> Global Model Train accuracy: 0.0101, Train accuracy top-5: 0.0514
+05-06 13:38 INFO     >> Global Model Test accuracy: 0.0100, Test accuracy top-5: 0.0535
+05-06 13:38 INFO     >> Global Model Train loss: 4.7206
+05-06 13:38 INFO     in comm round:2
+05-06 13:38 INFO     Training network 0 n_training: 5000
+05-06 13:38 INFO     Training network 0
+05-06 13:38 INFO     Client: 0 Epoch: 0 Loss: 4.136276324590047
+05-06 13:38 INFO     Client: 0 Epoch: 1 Loss: 4.0276995071998005
+05-06 13:38 INFO     Client: 0 Epoch: 2 Loss: 3.9420497998213158
+05-06 13:38 INFO     Client: 0 Epoch: 3 Loss: 3.9079937109580407
+05-06 13:38 INFO     Client: 0 Epoch: 4 Loss: 3.879477519255418
+05-06 13:38 INFO      ** Client: 0 Training complete **
+05-06 13:38 INFO     Training network 1 n_training: 5000
+05-06 13:38 INFO     Training network 1
+05-06 13:38 INFO     Client: 1 Epoch: 0 Loss: 4.16984407718365
+05-06 13:38 INFO     Client: 1 Epoch: 1 Loss: 4.036246880506858
+05-06 13:38 INFO     Client: 1 Epoch: 2 Loss: 3.9720727847172665
+05-06 13:38 INFO     Client: 1 Epoch: 3 Loss: 3.934387457676423
+05-06 13:39 INFO     Client: 1 Epoch: 4 Loss: 3.898968513195331
+05-06 13:39 INFO      ** Client: 1 Training complete **
+05-06 13:39 INFO     Training network 2 n_training: 5000
+05-06 13:39 INFO     Training network 2
+05-06 13:39 INFO     Client: 2 Epoch: 0 Loss: 4.159672290850908
+05-06 13:39 INFO     Client: 2 Epoch: 1 Loss: 4.0430925870553045
+05-06 13:39 INFO     Client: 2 Epoch: 2 Loss: 3.9818015068005295
+05-06 13:39 INFO     Client: 2 Epoch: 3 Loss: 3.947761514247992
+05-06 13:39 INFO     Client: 2 Epoch: 4 Loss: 3.8989785267756534
+05-06 13:39 INFO      ** Client: 2 Training complete **
+05-06 13:39 INFO     Training network 3 n_training: 5000
+05-06 13:39 INFO     Training network 3
+05-06 13:39 INFO     Client: 3 Epoch: 0 Loss: 4.172087663259262
+05-06 13:39 INFO     Client: 3 Epoch: 1 Loss: 4.025608267539587
+05-06 13:39 INFO     Client: 3 Epoch: 2 Loss: 3.996105349980868
+05-06 13:39 INFO     Client: 3 Epoch: 3 Loss: 3.9528853679314637
+05-06 13:39 INFO     Client: 3 Epoch: 4 Loss: 3.9127159852247972
+05-06 13:39 INFO      ** Client: 3 Training complete **
+05-06 13:39 INFO     Training network 4 n_training: 5000
+05-06 13:39 INFO     Training network 4
+05-06 13:39 INFO     Client: 4 Epoch: 0 Loss: 4.131690566356365
+05-06 13:39 INFO     Client: 4 Epoch: 1 Loss: 3.992132306098938
+05-06 13:39 INFO     Client: 4 Epoch: 2 Loss: 3.943993458381066
+05-06 13:39 INFO     Client: 4 Epoch: 3 Loss: 3.925555116091019
+05-06 13:39 INFO     Client: 4 Epoch: 4 Loss: 3.869951370434883
+05-06 13:39 INFO      ** Client: 4 Training complete **
+05-06 13:39 INFO     Training network 5 n_training: 5000
+05-06 13:39 INFO     Training network 5
+05-06 13:39 INFO     Client: 5 Epoch: 0 Loss: 4.1372755368550616
+05-06 13:39 INFO     Client: 5 Epoch: 1 Loss: 4.006214624796158
+05-06 13:39 INFO     Client: 5 Epoch: 2 Loss: 3.9698692682461862
+05-06 13:39 INFO     Client: 5 Epoch: 3 Loss: 3.9380268989465175
+05-06 13:39 INFO     Client: 5 Epoch: 4 Loss: 3.8942291003007155
+05-06 13:39 INFO      ** Client: 5 Training complete **
+05-06 13:39 INFO     Training network 6 n_training: 5000
+05-06 13:39 INFO     Training network 6
+05-06 13:39 INFO     Client: 6 Epoch: 0 Loss: 4.122999157661047
+05-06 13:39 INFO     Client: 6 Epoch: 1 Loss: 3.9900347269498386
+05-06 13:39 INFO     Client: 6 Epoch: 2 Loss: 3.968854179749122
+05-06 13:39 INFO     Client: 6 Epoch: 3 Loss: 3.9041749789164615
+05-06 13:39 INFO     Client: 6 Epoch: 4 Loss: 3.8888766979559874
+05-06 13:39 INFO      ** Client: 6 Training complete **
+05-06 13:39 INFO     Training network 7 n_training: 5000
+05-06 13:39 INFO     Training network 7
+05-06 13:40 INFO     Client: 7 Epoch: 0 Loss: 4.158269952505063
+05-06 13:40 INFO     Client: 7 Epoch: 1 Loss: 4.035315363835066
+05-06 13:40 INFO     Client: 7 Epoch: 2 Loss: 3.958923113651765
+05-06 13:40 INFO     Client: 7 Epoch: 3 Loss: 3.9426276836639795
+05-06 13:40 INFO     Client: 7 Epoch: 4 Loss: 3.9116206352527323
+05-06 13:40 INFO      ** Client: 7 Training complete **
+05-06 13:40 INFO     Training network 8 n_training: 5000
+05-06 13:40 INFO     Training network 8
+05-06 13:40 INFO     Client: 8 Epoch: 0 Loss: 4.176430714436067
+05-06 13:40 INFO     Client: 8 Epoch: 1 Loss: 4.023301274348528
+05-06 13:40 INFO     Client: 8 Epoch: 2 Loss: 3.972321938245724
+05-06 13:40 INFO     Client: 8 Epoch: 3 Loss: 3.927810103465349
+05-06 13:40 INFO     Client: 8 Epoch: 4 Loss: 3.9074284663567176
+05-06 13:40 INFO      ** Client: 8 Training complete **
+05-06 13:40 INFO     Training network 9 n_training: 5000
+05-06 13:40 INFO     Training network 9
+05-06 13:40 INFO     Client: 9 Epoch: 0 Loss: 4.137572065377847
+05-06 13:40 INFO     Client: 9 Epoch: 1 Loss: 4.04202934106191
+05-06 13:40 INFO     Client: 9 Epoch: 2 Loss: 3.987824932122842
+05-06 13:40 INFO     Client: 9 Epoch: 3 Loss: 3.9475940802158456
+05-06 13:40 INFO     Client: 9 Epoch: 4 Loss: 3.911822404616918
+05-06 13:40 INFO      ** Client: 9 Training complete **
+05-06 13:40 INFO     global n_training: 781
+05-06 13:40 INFO     global n_test: 157
+05-06 13:40 INFO     >> Global Model Train accuracy: 0.0132, Train accuracy top-5: 0.0716
+05-06 13:40 INFO     >> Global Model Test accuracy: 0.0155, Test accuracy top-5: 0.0774
+05-06 13:40 INFO     >> Global Model Train loss: 4.7066
+05-06 13:40 INFO     in comm round:3
+05-06 13:40 INFO     Training network 0 n_training: 5000
+05-06 13:40 INFO     Training network 0
+05-06 13:40 INFO     Client: 0 Epoch: 0 Loss: 4.007914766287192
+05-06 13:40 INFO     Client: 0 Epoch: 1 Loss: 3.8797817016259217
+05-06 13:40 INFO     Client: 0 Epoch: 2 Loss: 3.8169800501603346
+05-06 13:40 INFO     Client: 0 Epoch: 3 Loss: 3.7655720099424705
+05-06 13:40 INFO     Client: 0 Epoch: 4 Loss: 3.7280538234955225
+05-06 13:40 INFO      ** Client: 0 Training complete **
+05-06 13:40 INFO     Training network 1 n_training: 5000
+05-06 13:40 INFO     Training network 1
+05-06 13:41 INFO     Client: 1 Epoch: 0 Loss: 4.0115901078933325
+05-06 13:41 INFO     Client: 1 Epoch: 1 Loss: 3.910330112163837
+05-06 13:41 INFO     Client: 1 Epoch: 2 Loss: 3.8530698097669163
+05-06 13:41 INFO     Client: 1 Epoch: 3 Loss: 3.8245521111366076
+05-06 13:41 INFO     Client: 1 Epoch: 4 Loss: 3.7859641772050123
+05-06 13:41 INFO      ** Client: 1 Training complete **
+05-06 13:41 INFO     Training network 2 n_training: 5000
+05-06 13:41 INFO     Training network 2
+05-06 13:41 INFO     Client: 2 Epoch: 0 Loss: 4.014793649697915
+05-06 13:41 INFO     Client: 2 Epoch: 1 Loss: 3.905069892223065
+05-06 13:41 INFO     Client: 2 Epoch: 2 Loss: 3.850433065341069
+05-06 13:41 INFO     Client: 2 Epoch: 3 Loss: 3.807064841955136
+05-06 13:41 INFO     Client: 2 Epoch: 4 Loss: 3.783330351878435
+05-06 13:41 INFO      ** Client: 2 Training complete **
+05-06 13:41 INFO     Training network 3 n_training: 5000
+05-06 13:41 INFO     Training network 3
+05-06 13:41 INFO     Client: 3 Epoch: 0 Loss: 4.004910221466651
+05-06 13:41 INFO     Client: 3 Epoch: 1 Loss: 3.9190755990835338
+05-06 13:41 INFO     Client: 3 Epoch: 2 Loss: 3.8715577064416347
+05-06 13:41 INFO     Client: 3 Epoch: 3 Loss: 3.8300818541111092
+05-06 13:41 INFO     Client: 3 Epoch: 4 Loss: 3.7893832280085635
+05-06 13:41 INFO      ** Client: 3 Training complete **
+05-06 13:41 INFO     Training network 4 n_training: 5000
+05-06 13:41 INFO     Training network 4
+05-06 13:41 INFO     Client: 4 Epoch: 0 Loss: 3.987114967444004
+05-06 13:41 INFO     Client: 4 Epoch: 1 Loss: 3.8793379068374634
+05-06 13:41 INFO     Client: 4 Epoch: 2 Loss: 3.853765683296399
+05-06 13:41 INFO     Client: 4 Epoch: 3 Loss: 3.8047114671804967
+05-06 13:41 INFO     Client: 4 Epoch: 4 Loss: 3.760912476441799
+05-06 13:41 INFO      ** Client: 4 Training complete **
+05-06 13:41 INFO     Training network 5 n_training: 5000
+05-06 13:41 INFO     Training network 5
+05-06 13:41 INFO     Client: 5 Epoch: 0 Loss: 4.004352129422701
+05-06 13:41 INFO     Client: 5 Epoch: 1 Loss: 3.8978647085336537
+05-06 13:41 INFO     Client: 5 Epoch: 2 Loss: 3.848446155205751
+05-06 13:41 INFO     Client: 5 Epoch: 3 Loss: 3.832952474936461
+05-06 13:41 INFO     Client: 5 Epoch: 4 Loss: 3.7842635344236326
+05-06 13:41 INFO      ** Client: 5 Training complete **
+05-06 13:41 INFO     Training network 6 n_training: 5000
+05-06 13:41 INFO     Training network 6
+05-06 13:41 INFO     Client: 6 Epoch: 0 Loss: 3.9959654135581775
+05-06 13:42 INFO     Client: 6 Epoch: 1 Loss: 3.9023258747198644
+05-06 13:42 INFO     Client: 6 Epoch: 2 Loss: 3.8283437062532473
+05-06 13:42 INFO     Client: 6 Epoch: 3 Loss: 3.810690699479519
+05-06 13:42 INFO     Client: 6 Epoch: 4 Loss: 3.7734944698138113
+05-06 13:42 INFO      ** Client: 6 Training complete **
+05-06 13:42 INFO     Training network 7 n_training: 5000
+05-06 13:42 INFO     Training network 7
+05-06 13:42 INFO     Client: 7 Epoch: 0 Loss: 4.02128184453035
+05-06 13:42 INFO     Client: 7 Epoch: 1 Loss: 3.912191485747313
+05-06 13:42 INFO     Client: 7 Epoch: 2 Loss: 3.872279154948699
+05-06 13:42 INFO     Client: 7 Epoch: 3 Loss: 3.817972189340836
+05-06 13:42 INFO     Client: 7 Epoch: 4 Loss: 3.7744011084238687
+05-06 13:42 INFO      ** Client: 7 Training complete **
+05-06 13:42 INFO     Training network 8 n_training: 5000
+05-06 13:42 INFO     Training network 8
+05-06 13:42 INFO     Client: 8 Epoch: 0 Loss: 4.017236520082522
+05-06 13:42 INFO     Client: 8 Epoch: 1 Loss: 3.876699059437483
+05-06 13:42 INFO     Client: 8 Epoch: 2 Loss: 3.8333380833650246
+05-06 13:42 INFO     Client: 8 Epoch: 3 Loss: 3.7969261744083505
+05-06 13:42 INFO     Client: 8 Epoch: 4 Loss: 3.7643739321292977
+05-06 13:42 INFO      ** Client: 8 Training complete **
+05-06 13:42 INFO     Training network 9 n_training: 5000
+05-06 13:42 INFO     Training network 9
+05-06 13:42 INFO     Client: 9 Epoch: 0 Loss: 4.032664980643835
+05-06 13:42 INFO     Client: 9 Epoch: 1 Loss: 3.9099176266254525
+05-06 13:42 INFO     Client: 9 Epoch: 2 Loss: 3.8701675916329408
+05-06 13:42 INFO     Client: 9 Epoch: 3 Loss: 3.8302854941441464
+05-06 13:42 INFO     Client: 9 Epoch: 4 Loss: 3.783792425424625
+05-06 13:42 INFO      ** Client: 9 Training complete **
+05-06 13:42 INFO     global n_training: 781
+05-06 13:42 INFO     global n_test: 157
+05-06 13:42 INFO     >> Global Model Train accuracy: 0.0643, Train accuracy top-5: 0.2276
+05-06 13:42 INFO     >> Global Model Test accuracy: 0.0763, Test accuracy top-5: 0.2546
+05-06 13:42 INFO     >> Global Model Train loss: 4.0643
+05-06 13:42 INFO     in comm round:4
+05-06 13:42 INFO     Training network 0 n_training: 5000
+05-06 13:42 INFO     Training network 0
+05-06 13:42 INFO     Client: 0 Epoch: 0 Loss: 3.8148390299234634
+05-06 13:43 INFO     Client: 0 Epoch: 1 Loss: 3.719274973257994
+05-06 13:43 INFO     Client: 0 Epoch: 2 Loss: 3.6643268175614185
+05-06 13:43 INFO     Client: 0 Epoch: 3 Loss: 3.6025886046580777
+05-06 13:43 INFO     Client: 0 Epoch: 4 Loss: 3.5779752181126523
+05-06 13:43 INFO      ** Client: 0 Training complete **
+05-06 13:43 INFO     Training network 1 n_training: 5000
+05-06 13:43 INFO     Training network 1
+05-06 13:43 INFO     Client: 1 Epoch: 0 Loss: 3.8471103814932017
+05-06 13:43 INFO     Client: 1 Epoch: 1 Loss: 3.7627807519374747
+05-06 13:43 INFO     Client: 1 Epoch: 2 Loss: 3.703381364162152
+05-06 13:43 INFO     Client: 1 Epoch: 3 Loss: 3.652479208432711
+05-06 13:43 INFO     Client: 1 Epoch: 4 Loss: 3.6028386935209618
+05-06 13:43 INFO      ** Client: 1 Training complete **
+05-06 13:43 INFO     Training network 2 n_training: 5000
+05-06 13:43 INFO     Training network 2
+05-06 13:43 INFO     Client: 2 Epoch: 0 Loss: 3.866507420173058
+05-06 13:43 INFO     Client: 2 Epoch: 1 Loss: 3.7586959508749156
+05-06 13:43 INFO     Client: 2 Epoch: 2 Loss: 3.700181624828241
+05-06 13:43 INFO     Client: 2 Epoch: 3 Loss: 3.644957407926902
+05-06 13:43 INFO     Client: 2 Epoch: 4 Loss: 3.6120105676161938
+05-06 13:43 INFO      ** Client: 2 Training complete **
+05-06 13:43 INFO     Training network 3 n_training: 5000
+05-06 13:43 INFO     Training network 3
+05-06 13:43 INFO     Client: 3 Epoch: 0 Loss: 3.874406634232937
+05-06 13:43 INFO     Client: 3 Epoch: 1 Loss: 3.727986078995925
+05-06 13:43 INFO     Client: 3 Epoch: 2 Loss: 3.688921647194104
+05-06 13:43 INFO     Client: 3 Epoch: 3 Loss: 3.6234079813345885
+05-06 13:43 INFO     Client: 3 Epoch: 4 Loss: 3.5877922070332064
+05-06 13:43 INFO      ** Client: 3 Training complete **
+05-06 13:43 INFO     Training network 4 n_training: 5000
+05-06 13:43 INFO     Training network 4
+05-06 13:43 INFO     Client: 4 Epoch: 0 Loss: 3.835527939674182
+05-06 13:43 INFO     Client: 4 Epoch: 1 Loss: 3.7224612877919125
+05-06 13:44 INFO     Client: 4 Epoch: 2 Loss: 3.6566668382057776
+05-06 13:44 INFO     Client: 4 Epoch: 3 Loss: 3.6464206897295437
+05-06 13:44 INFO     Client: 4 Epoch: 4 Loss: 3.6054924634786754
+05-06 13:44 INFO      ** Client: 4 Training complete **
+05-06 13:44 INFO     Training network 5 n_training: 5000
+05-06 13:44 INFO     Training network 5
+05-06 13:44 INFO     Client: 5 Epoch: 0 Loss: 3.8627772698035607
+05-06 13:44 INFO     Client: 5 Epoch: 1 Loss: 3.749619600100395
+05-06 13:44 INFO     Client: 5 Epoch: 2 Loss: 3.694709200125474
+05-06 13:44 INFO     Client: 5 Epoch: 3 Loss: 3.653863393343412
+05-06 13:44 INFO     Client: 5 Epoch: 4 Loss: 3.6093720381076517
+05-06 13:44 INFO      ** Client: 5 Training complete **
+05-06 13:44 INFO     Training network 6 n_training: 5000
+05-06 13:44 INFO     Training network 6
+05-06 13:44 INFO     Client: 6 Epoch: 0 Loss: 3.8219567842972584
+05-06 13:44 INFO     Client: 6 Epoch: 1 Loss: 3.74051501812079
+05-06 13:44 INFO     Client: 6 Epoch: 2 Loss: 3.6826050006426296
+05-06 13:44 INFO     Client: 6 Epoch: 3 Loss: 3.638051036076668
+05-06 13:44 INFO     Client: 6 Epoch: 4 Loss: 3.5832105294252052
+05-06 13:44 INFO      ** Client: 6 Training complete **
+05-06 13:44 INFO     Training network 7 n_training: 5000
+05-06 13:44 INFO     Training network 7
+05-06 13:44 INFO     Client: 7 Epoch: 0 Loss: 3.855405391790928
+05-06 13:44 INFO     Client: 7 Epoch: 1 Loss: 3.7446729984038916
+05-06 13:44 INFO     Client: 7 Epoch: 2 Loss: 3.6891284875380688
+05-06 13:44 INFO     Client: 7 Epoch: 3 Loss: 3.665225869570023
+05-06 13:44 INFO     Client: 7 Epoch: 4 Loss: 3.6186466492139377
+05-06 13:44 INFO      ** Client: 7 Training complete **
+05-06 13:44 INFO     Training network 8 n_training: 5000
+05-06 13:44 INFO     Training network 8
+05-06 13:44 INFO     Client: 8 Epoch: 0 Loss: 3.827197105456621
+05-06 13:44 INFO     Client: 8 Epoch: 1 Loss: 3.7144492100446653
+05-06 13:44 INFO     Client: 8 Epoch: 2 Loss: 3.6578913590846915
+05-06 13:44 INFO     Client: 8 Epoch: 3 Loss: 3.6279206917836118
+05-06 13:44 INFO     Client: 8 Epoch: 4 Loss: 3.5694470436145096
+05-06 13:44 INFO      ** Client: 8 Training complete **
+05-06 13:44 INFO     Training network 9 n_training: 5000
+05-06 13:44 INFO     Training network 9
+05-06 13:44 INFO     Client: 9 Epoch: 0 Loss: 3.8568906478392773
+05-06 13:44 INFO     Client: 9 Epoch: 1 Loss: 3.7410907470262966
+05-06 13:44 INFO     Client: 9 Epoch: 2 Loss: 3.7046789144858336
+05-06 13:45 INFO     Client: 9 Epoch: 3 Loss: 3.6715677273579135
+05-06 13:45 INFO     Client: 9 Epoch: 4 Loss: 3.6129973179254775
+05-06 13:45 INFO      ** Client: 9 Training complete **
+05-06 13:45 INFO     global n_training: 781
+05-06 13:45 INFO     global n_test: 157
+05-06 13:45 INFO     >> Global Model Train accuracy: 0.1259, Train accuracy top-5: 0.3601
+05-06 13:45 INFO     >> Global Model Test accuracy: 0.1319, Test accuracy top-5: 0.3652
+05-06 13:45 INFO     >> Global Model Train loss: 3.6686
+05-06 13:45 INFO     in comm round:5
+05-06 13:45 INFO     Training network 0 n_training: 5000
+05-06 13:45 INFO     Training network 0
+05-06 13:45 INFO     Client: 0 Epoch: 0 Loss: 3.650671359820244
+05-06 13:45 INFO     Client: 0 Epoch: 1 Loss: 3.5547683361249094
+05-06 13:45 INFO     Client: 0 Epoch: 2 Loss: 3.526612718900045
+05-06 13:45 INFO     Client: 0 Epoch: 3 Loss: 3.4719949471644864
+05-06 13:45 INFO     Client: 0 Epoch: 4 Loss: 3.4170137093617368
+05-06 13:45 INFO      ** Client: 0 Training complete **
+05-06 13:45 INFO     Training network 1 n_training: 5000
+05-06 13:45 INFO     Training network 1
+05-06 13:45 INFO     Client: 1 Epoch: 0 Loss: 3.715767029004219
+05-06 13:45 INFO     Client: 1 Epoch: 1 Loss: 3.6118538624201064
+05-06 13:45 INFO     Client: 1 Epoch: 2 Loss: 3.546582200588324
+05-06 13:45 INFO     Client: 1 Epoch: 3 Loss: 3.516491813537402
+05-06 13:45 INFO     Client: 1 Epoch: 4 Loss: 3.47120122726147
+05-06 13:45 INFO      ** Client: 1 Training complete **
+05-06 13:45 INFO     Training network 2 n_training: 5000
+05-06 13:45 INFO     Training network 2
+05-06 13:45 INFO     Client: 2 Epoch: 0 Loss: 3.7016879931474342
+05-06 13:45 INFO     Client: 2 Epoch: 1 Loss: 3.608343521753947
+05-06 13:45 INFO     Client: 2 Epoch: 2 Loss: 3.5589720744353075
+05-06 13:45 INFO     Client: 2 Epoch: 3 Loss: 3.476570658194713
+05-06 13:45 INFO     Client: 2 Epoch: 4 Loss: 3.428874807480054
+05-06 13:45 INFO      ** Client: 2 Training complete **
+05-06 13:45 INFO     Training network 3 n_training: 5000
+05-06 13:45 INFO     Training network 3
+05-06 13:45 INFO     Client: 3 Epoch: 0 Loss: 3.6863574859423514
+05-06 13:45 INFO     Client: 3 Epoch: 1 Loss: 3.579262299415393
+05-06 13:45 INFO     Client: 3 Epoch: 2 Loss: 3.539510800288274
+05-06 13:46 INFO     Client: 3 Epoch: 3 Loss: 3.4819708665211997
+05-06 13:46 INFO     Client: 3 Epoch: 4 Loss: 3.4489012895486293
+05-06 13:46 INFO      ** Client: 3 Training complete **
+05-06 13:46 INFO     Training network 4 n_training: 5000
+05-06 13:46 INFO     Training network 4
+05-06 13:46 INFO     Client: 4 Epoch: 0 Loss: 3.6649013543740296
+05-06 13:46 INFO     Client: 4 Epoch: 1 Loss: 3.579146217077206
+05-06 13:46 INFO     Client: 4 Epoch: 2 Loss: 3.5298823362741714
+05-06 13:46 INFO     Client: 4 Epoch: 3 Loss: 3.486011566259922
+05-06 13:46 INFO     Client: 4 Epoch: 4 Loss: 3.451248520459884
+05-06 13:46 INFO      ** Client: 4 Training complete **
+05-06 13:46 INFO     Training network 5 n_training: 5000
+05-06 13:46 INFO     Training network 5
+05-06 13:46 INFO     Client: 5 Epoch: 0 Loss: 3.69619550766089
+05-06 13:46 INFO     Client: 5 Epoch: 1 Loss: 3.594974838770353
+05-06 13:46 INFO     Client: 5 Epoch: 2 Loss: 3.5771786646965222
+05-06 13:46 INFO     Client: 5 Epoch: 3 Loss: 3.5253755159867115
+05-06 13:46 INFO     Client: 5 Epoch: 4 Loss: 3.470177045235267
+05-06 13:46 INFO      ** Client: 5 Training complete **
+05-06 13:46 INFO     Training network 6 n_training: 5000
+05-06 13:46 INFO     Training network 6
+05-06 13:46 INFO     Client: 6 Epoch: 0 Loss: 3.6713838760669413
+05-06 13:46 INFO     Client: 6 Epoch: 1 Loss: 3.5780237393501477
+05-06 13:46 INFO     Client: 6 Epoch: 2 Loss: 3.522151549657186
+05-06 13:46 INFO     Client: 6 Epoch: 3 Loss: 3.4868990152310104
+05-06 13:46 INFO     Client: 6 Epoch: 4 Loss: 3.454179060764802
+05-06 13:46 INFO      ** Client: 6 Training complete **
+05-06 13:46 INFO     Training network 7 n_training: 5000
+05-06 13:46 INFO     Training network 7
+05-06 13:46 INFO     Client: 7 Epoch: 0 Loss: 3.7087593720509457
+05-06 13:46 INFO     Client: 7 Epoch: 1 Loss: 3.5893406592882595
+05-06 13:46 INFO     Client: 7 Epoch: 2 Loss: 3.561722504786956
+05-06 13:46 INFO     Client: 7 Epoch: 3 Loss: 3.5120234886805215
+05-06 13:46 INFO     Client: 7 Epoch: 4 Loss: 3.489990552266439
+05-06 13:46 INFO      ** Client: 7 Training complete **
+05-06 13:46 INFO     Training network 8 n_training: 5000
+05-06 13:46 INFO     Training network 8
+05-06 13:46 INFO     Client: 8 Epoch: 0 Loss: 3.665933926900228
+05-06 13:46 INFO     Client: 8 Epoch: 1 Loss: 3.583610409345382
+05-06 13:46 INFO     Client: 8 Epoch: 2 Loss: 3.500547002523373
+05-06 13:46 INFO     Client: 8 Epoch: 3 Loss: 3.496966612644685
+05-06 13:47 INFO     Client: 8 Epoch: 4 Loss: 3.4319114012595935
+05-06 13:47 INFO      ** Client: 8 Training complete **
+05-06 13:47 INFO     Training network 9 n_training: 5000
+05-06 13:47 INFO     Training network 9
+05-06 13:47 INFO     Client: 9 Epoch: 0 Loss: 3.709521953876202
+05-06 13:47 INFO     Client: 9 Epoch: 1 Loss: 3.6023811254745874
+05-06 13:47 INFO     Client: 9 Epoch: 2 Loss: 3.5582139308636007
+05-06 13:47 INFO     Client: 9 Epoch: 3 Loss: 3.50481156202463
+05-06 13:47 INFO     Client: 9 Epoch: 4 Loss: 3.4717765893691626
+05-06 13:47 INFO      ** Client: 9 Training complete **
+05-06 13:47 INFO     global n_training: 781
+05-06 13:47 INFO     global n_test: 157
+05-06 13:47 INFO     >> Global Model Train accuracy: 0.1574, Train accuracy top-5: 0.4133
+05-06 13:47 INFO     >> Global Model Test accuracy: 0.1564, Test accuracy top-5: 0.4188
+05-06 13:47 INFO     >> Global Model Train loss: 3.4969
+05-06 13:47 INFO     in comm round:6
+05-06 13:47 INFO     Training network 0 n_training: 5000
+05-06 13:47 INFO     Training network 0
+05-06 13:47 INFO     Client: 0 Epoch: 0 Loss: 3.5250163200574045
+05-06 13:47 INFO     Client: 0 Epoch: 1 Loss: 3.4323721482203555
+05-06 13:47 INFO     Client: 0 Epoch: 2 Loss: 3.373704500687428
+05-06 13:47 INFO     Client: 0 Epoch: 3 Loss: 3.3216938911340175
+05-06 13:47 INFO     Client: 0 Epoch: 4 Loss: 3.289022143070514
+05-06 13:47 INFO      ** Client: 0 Training complete **
+05-06 13:47 INFO     Training network 1 n_training: 5000
+05-06 13:47 INFO     Training network 1
+05-06 13:47 INFO     Client: 1 Epoch: 0 Loss: 3.571800938019386
