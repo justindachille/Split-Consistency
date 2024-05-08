@@ -501,7 +501,10 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
 
         
         train_ds = DatasetSplit(train_ds, dataidxs)
-        should_drop_last = True if ds_name == 'cifar100' or ds_name == 'cifar10' else False
+        # Fedavg breaks if we don't drop last since it has batch normalization
+        # It could receive batch size of 1 and throw an error
+        # Only an issue when partition is noniid though
+        should_drop_last = True if (ds_name == 'cifar100') or (ds_name == 'cifar10' and args.alg == 'fedavg') or (args.partition=='noniid-labeldir') else False
         train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=should_drop_last, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         
@@ -637,9 +640,18 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
 
     return train_dl, test_dl, train_ds, test_ds, test_dl_local
 def FedAvg(w):
+    device = None
+    for weights in w:
+        for k, v in weights.items():
+            if device is None:
+                device = v.device
+            elif v.device != device:
+                weights[k] = v.to(device)
+
     w_avg = copy.deepcopy(w[0])
     for k in w_avg.keys():
         for i in range(1, len(w)):
             w_avg[k] += w[i][k]
         w_avg[k] = torch.div(w_avg[k], len(w))
+
     return w_avg
