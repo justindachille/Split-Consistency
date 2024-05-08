@@ -453,6 +453,11 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
 
     test_dl_local = None
     
+    # Fedavg breaks if we don't drop last since it has batch normalization
+    # It could receive batch size of 1 and throw an error
+    # Only an issue when partition is noniid though
+    should_drop_last = True if (ds_name == 'cifar100') or (ds_name == 'cifar10' and args.alg == 'fedavg') or (args.partition=='noniid-labeldir') else False
+    
     if ds_name in ('cifar10', 'cifar100'):
         if ds_name == 'cifar10':
             
@@ -501,10 +506,6 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
 
         
         train_ds = DatasetSplit(train_ds, dataidxs)
-        # Fedavg breaks if we don't drop last since it has batch normalization
-        # It could receive batch size of 1 and throw an error
-        # Only an issue when partition is noniid though
-        should_drop_last = True if (ds_name == 'cifar100') or (ds_name == 'cifar10' and args.alg == 'fedavg') or (args.partition=='noniid-labeldir') else False
         train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=should_drop_last, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False,persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         
@@ -537,7 +538,7 @@ def get_dataloader(args, ds_name, datadir, train_bs, test_bs, X_train=None, y_tr
         train_ds = dl_obj(datadir+'tiny-imagenet-200/train/', dataidxs=dataidxs, transform=transform_train)
         test_ds = dl_obj(datadir+'tiny-imagenet-200/val_again/', transform=transform_test)
 
-        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=False, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
+        train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, num_workers=args.n_train_workers, drop_last=should_drop_last, shuffle=True, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, num_workers=args.n_test_workers, shuffle=False, pin_memory=True, persistent_workers=True, worker_init_fn=set_worker_sharing_strategy)
         
         
