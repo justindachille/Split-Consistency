@@ -32,7 +32,6 @@ def train_net(net, train_dl_local, optimizer, device, args):
     return train_acc, train_loss
 
 def fine_tune(net, train_dl_local, test_dl_local, test_dl_global, device, args, logger, max_patience=3):
-    print('dev', device)
     patience = 0
     best_acc = 0.0
     best_local_acc = 0.0
@@ -57,6 +56,8 @@ def fine_tune(net, train_dl_local, test_dl_local, test_dl_global, device, args, 
         global_test_acc, _, global_test_acc_top5 = compute_accuracy(net, test_dl_global, get_confusion_matrix=False, device=device)
 
         print(f'Epoch {epoch+1} | Train Acc: {train_acc:.4f} | Local Test Acc: {local_test_acc:.4f} | Global Test Acc: {global_test_acc:.4f}')
+        
+        logger.info(f"in comm round:{epoch+1} >> Global Model Test accuracy: {global_test_acc:.4f}")
 
         best_local_acc = max(local_test_acc, best_local_acc)
         best_local_acc_top5 = max(local_test_acc_top5, best_local_acc_top5)
