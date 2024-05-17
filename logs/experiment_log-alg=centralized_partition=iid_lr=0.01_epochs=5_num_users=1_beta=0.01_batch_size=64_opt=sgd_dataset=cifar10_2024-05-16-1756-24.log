@@ -1,0 +1,140 @@
+05-16 17:56 INFO     cuda
+05-16 17:56 INFO     Command Line Arguments: 
+{
+    "epochs": 5,
+    "comm_round": 100,
+    "sample_fraction": 1.0,
+    "alpha": 0.01,
+    "dataset": "cifar10",
+    "datadir": "../data/",
+    "partition": "iid",
+    "alg": "centralized",
+    "model": "resnet-18",
+    "split_layer": 1,
+    "n_parties": 1,
+    "lr": 0.01,
+    "mu": 1,
+    "std_coeff": 2.5,
+    "unif_coeff": 0.5,
+    "batch_size": 64,
+    "load_first_net": 1,
+    "pool_option": "FIFO",
+    "model_buffer_size": 1,
+    "optimizer": "sgd",
+    "simp_width": 1,
+    "out_dim": 256,
+    "reg": 0.0005,
+    "temperature": 0.5,
+    "logdir": "./",
+    "log_file_name": "logs/experiment_log-alg=centralized_partition=iid_lr=0.01_epochs=5_num_users=1_beta=0.01_batch_size=64_opt=sgd_dataset=cifar10_2024-05-16-1756-24",
+    "seed": 123,
+    "device": "cuda:4",
+    "accuracies_file": "logs/centralized.csv",
+    "dont_skip": false,
+    "n_train_workers": 1,
+    "n_test_workers": 1,
+    "arch": "mobilenet_v3_large",
+    "multiprocessing": 0
+}
+05-16 17:56 INFO     Data statistics: {0: {0: 5000, 1: 5000, 2: 5000, 3: 5000, 4: 5000, 5: 5000, 6: 5000, 7: 5000, 8: 5000, 9: 5000}}
+05-16 17:57 INFO     in comm round:1 >> Global Model Test accuracy: 0.5184
+05-16 17:57 INFO     in comm round:2 >> Global Model Test accuracy: 0.6202
+05-16 17:58 INFO     in comm round:3 >> Global Model Test accuracy: 0.7017
+05-16 17:59 INFO     in comm round:4 >> Global Model Test accuracy: 0.7536
+05-16 17:59 INFO     in comm round:5 >> Global Model Test accuracy: 0.7642
+05-16 18:00 INFO     in comm round:6 >> Global Model Test accuracy: 0.7884
+05-16 18:01 INFO     in comm round:7 >> Global Model Test accuracy: 0.8044
+05-16 18:01 INFO     in comm round:8 >> Global Model Test accuracy: 0.8134
+05-16 18:02 INFO     in comm round:9 >> Global Model Test accuracy: 0.8200
+05-16 18:02 INFO     in comm round:10 >> Global Model Test accuracy: 0.8251
+05-16 18:03 INFO     in comm round:11 >> Global Model Test accuracy: 0.8402
+05-16 18:04 INFO     in comm round:12 >> Global Model Test accuracy: 0.8235
+05-16 18:04 INFO     in comm round:13 >> Global Model Test accuracy: 0.8453
+05-16 18:05 INFO     in comm round:14 >> Global Model Test accuracy: 0.8566
+05-16 18:06 INFO     in comm round:15 >> Global Model Test accuracy: 0.8547
+05-16 18:06 INFO     in comm round:16 >> Global Model Test accuracy: 0.8638
+05-16 18:07 INFO     in comm round:17 >> Global Model Test accuracy: 0.8505
+05-16 18:08 INFO     in comm round:18 >> Global Model Test accuracy: 0.8601
+05-16 18:08 INFO     in comm round:19 >> Global Model Test accuracy: 0.8648
+05-16 18:09 INFO     in comm round:20 >> Global Model Test accuracy: 0.8573
+05-16 18:10 INFO     in comm round:21 >> Global Model Test accuracy: 0.8701
+05-16 18:10 INFO     in comm round:22 >> Global Model Test accuracy: 0.8531
+05-16 18:11 INFO     in comm round:23 >> Global Model Test accuracy: 0.8694
+05-16 18:12 INFO     in comm round:24 >> Global Model Test accuracy: 0.8745
+05-16 18:12 INFO     in comm round:25 >> Global Model Test accuracy: 0.8747
+05-16 18:13 INFO     in comm round:26 >> Global Model Test accuracy: 0.8747
+05-16 18:13 INFO     in comm round:27 >> Global Model Test accuracy: 0.8799
+05-16 18:14 INFO     in comm round:28 >> Global Model Test accuracy: 0.8703
+05-16 18:15 INFO     in comm round:29 >> Global Model Test accuracy: 0.8779
+05-16 18:15 INFO     in comm round:30 >> Global Model Test accuracy: 0.8826
+05-16 18:16 INFO     in comm round:31 >> Global Model Test accuracy: 0.8702
+05-16 18:17 INFO     in comm round:32 >> Global Model Test accuracy: 0.8826
+05-16 18:17 INFO     in comm round:33 >> Global Model Test accuracy: 0.8793
+05-16 18:18 INFO     in comm round:34 >> Global Model Test accuracy: 0.8766
+05-16 18:19 INFO     in comm round:35 >> Global Model Test accuracy: 0.8855
+05-16 18:19 INFO     in comm round:36 >> Global Model Test accuracy: 0.8826
+05-16 18:20 INFO     in comm round:37 >> Global Model Test accuracy: 0.8845
+05-16 18:21 INFO     in comm round:38 >> Global Model Test accuracy: 0.8748
+05-16 18:21 INFO     in comm round:39 >> Global Model Test accuracy: 0.8804
+05-16 18:22 INFO     in comm round:40 >> Global Model Test accuracy: 0.8648
+05-16 18:23 INFO     in comm round:41 >> Global Model Test accuracy: 0.8834
+05-16 18:23 INFO     in comm round:42 >> Global Model Test accuracy: 0.8766
+05-16 18:24 INFO     in comm round:43 >> Global Model Test accuracy: 0.8574
+05-16 18:24 INFO     in comm round:44 >> Global Model Test accuracy: 0.8812
+05-16 18:25 INFO     in comm round:45 >> Global Model Test accuracy: 0.8723
+05-16 18:26 INFO     in comm round:46 >> Global Model Test accuracy: 0.8741
+05-16 18:26 INFO     in comm round:47 >> Global Model Test accuracy: 0.8880
+05-16 18:27 INFO     in comm round:48 >> Global Model Test accuracy: 0.8707
+05-16 18:28 INFO     in comm round:49 >> Global Model Test accuracy: 0.8894
+05-16 18:28 INFO     in comm round:50 >> Global Model Test accuracy: 0.8797
+05-16 18:29 INFO     in comm round:51 >> Global Model Test accuracy: 0.8789
+05-16 18:30 INFO     in comm round:52 >> Global Model Test accuracy: 0.8815
+05-16 18:30 INFO     in comm round:53 >> Global Model Test accuracy: 0.8859
+05-16 18:31 INFO     in comm round:54 >> Global Model Test accuracy: 0.8827
+05-16 18:32 INFO     in comm round:55 >> Global Model Test accuracy: 0.8827
+05-16 18:32 INFO     in comm round:56 >> Global Model Test accuracy: 0.8864
+05-16 18:33 INFO     in comm round:57 >> Global Model Test accuracy: 0.8778
+05-16 18:34 INFO     in comm round:58 >> Global Model Test accuracy: 0.8866
+05-16 18:34 INFO     in comm round:59 >> Global Model Test accuracy: 0.8672
+05-16 18:35 INFO     in comm round:60 >> Global Model Test accuracy: 0.8928
+05-16 18:35 INFO     in comm round:61 >> Global Model Test accuracy: 0.8938
+05-16 18:36 INFO     in comm round:62 >> Global Model Test accuracy: 0.8926
+05-16 18:37 INFO     in comm round:63 >> Global Model Test accuracy: 0.8896
+05-16 18:37 INFO     in comm round:64 >> Global Model Test accuracy: 0.8833
+05-16 18:38 INFO     in comm round:65 >> Global Model Test accuracy: 0.8819
+05-16 18:39 INFO     in comm round:66 >> Global Model Test accuracy: 0.8900
+05-16 18:39 INFO     in comm round:67 >> Global Model Test accuracy: 0.8874
+05-16 18:40 INFO     in comm round:68 >> Global Model Test accuracy: 0.8984
+05-16 18:41 INFO     in comm round:69 >> Global Model Test accuracy: 0.8863
+05-16 18:41 INFO     in comm round:70 >> Global Model Test accuracy: 0.8817
+05-16 18:42 INFO     in comm round:71 >> Global Model Test accuracy: 0.8855
+05-16 18:43 INFO     in comm round:72 >> Global Model Test accuracy: 0.8847
+05-16 18:43 INFO     in comm round:73 >> Global Model Test accuracy: 0.8910
+05-16 18:44 INFO     in comm round:74 >> Global Model Test accuracy: 0.8784
+05-16 18:44 INFO     in comm round:75 >> Global Model Test accuracy: 0.8771
+05-16 18:45 INFO     in comm round:76 >> Global Model Test accuracy: 0.8842
+05-16 18:46 INFO     in comm round:77 >> Global Model Test accuracy: 0.8797
+05-16 18:46 INFO     in comm round:78 >> Global Model Test accuracy: 0.8901
+05-16 18:47 INFO     in comm round:79 >> Global Model Test accuracy: 0.8860
+05-16 18:48 INFO     in comm round:80 >> Global Model Test accuracy: 0.8814
+05-16 18:48 INFO     in comm round:81 >> Global Model Test accuracy: 0.8771
+05-16 18:49 INFO     in comm round:82 >> Global Model Test accuracy: 0.8960
+05-16 18:50 INFO     in comm round:83 >> Global Model Test accuracy: 0.8842
+05-16 18:50 INFO     in comm round:84 >> Global Model Test accuracy: 0.8824
+05-16 18:51 INFO     in comm round:85 >> Global Model Test accuracy: 0.8908
+05-16 18:52 INFO     in comm round:86 >> Global Model Test accuracy: 0.8883
+05-16 18:52 INFO     in comm round:87 >> Global Model Test accuracy: 0.8923
+05-16 18:53 INFO     in comm round:88 >> Global Model Test accuracy: 0.8830
+05-16 18:54 INFO     in comm round:89 >> Global Model Test accuracy: 0.8937
+05-16 18:54 INFO     in comm round:90 >> Global Model Test accuracy: 0.8868
+05-16 18:55 INFO     in comm round:91 >> Global Model Test accuracy: 0.8876
+05-16 18:55 INFO     in comm round:92 >> Global Model Test accuracy: 0.8858
+05-16 18:56 INFO     in comm round:93 >> Global Model Test accuracy: 0.8589
+05-16 18:57 INFO     in comm round:94 >> Global Model Test accuracy: 0.8924
+05-16 18:57 INFO     in comm round:95 >> Global Model Test accuracy: 0.8724
+05-16 18:58 INFO     in comm round:96 >> Global Model Test accuracy: 0.8955
+05-16 18:59 INFO     in comm round:97 >> Global Model Test accuracy: 0.8861
+05-16 18:59 INFO     in comm round:98 >> Global Model Test accuracy: 0.8923
+05-16 19:00 INFO     in comm round:99 >> Global Model Test accuracy: 0.8727
+05-16 19:00 INFO     in comm round:100 >> Global Model Test accuracy: 0.8865
+05-16 19:00 INFO     Starting Fine Tuning...
