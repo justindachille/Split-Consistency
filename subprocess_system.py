@@ -50,10 +50,10 @@ def main():
 
     def signal_handler(sig, frame):
         print("Keyboard interrupt received. Exiting...")
-        command_queue.join()
         for thread in threads:
-            thread.join()
+            thread.join(timeout=1)
         exit(0)
+
 
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -76,4 +76,7 @@ def main():
                     command_queue.put(command)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        signal_handler(None, None)
