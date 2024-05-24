@@ -23972,3 +23972,39 @@
 05-24 14:27 INFO     Training network 8
 05-24 14:27 INFO     n_training: 159
 05-24 14:27 INFO     n_test: 157
+05-24 14:27 INFO     Client: 8 Epoch: 0 Loss: 0.775900 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:27 INFO     Client: 8 Epoch: 1 Loss: 0.339035 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:27 INFO     Client: 8 Epoch: 2 Loss: 0.249771 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:27 INFO     Client: 8 Epoch: 3 Loss: 0.209636 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:27 INFO     Client: 8 Epoch: 4 Loss: 0.176149 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:27 INFO      ** Client: 8 Training complete **
+05-24 14:27 INFO     Training network 9 n_training: 9977
+05-24 14:27 INFO     Training network 9
+05-24 14:27 INFO     n_training: 155
+05-24 14:27 INFO     n_test: 157
+05-24 14:28 INFO     Client: 9 Epoch: 0 Loss: 0.943123 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:28 INFO     Client: 9 Epoch: 1 Loss: 0.457395 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:28 INFO     Client: 9 Epoch: 2 Loss: 0.343823 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:28 INFO     Client: 9 Epoch: 3 Loss: 0.280654 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:28 INFO     Client: 9 Epoch: 4 Loss: 0.252981 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:28 INFO      ** Client: 9 Training complete **
+05-24 14:28 INFO     global n_training: 1562
+05-24 14:28 INFO     global n_test: 157
+05-24 14:29 INFO     >> Global Model Train accuracy: 0.2511, Train accuracy top-5: 0.6369
+05-24 14:29 INFO     >> Global Model Test accuracy: 0.1884, Test accuracy top-5: 0.5026
+05-24 14:29 INFO     >> Global Model Train loss: 3.8808
+05-24 14:29 INFO     in comm round:226
+05-24 14:29 INFO     Training network 0 n_training: 10310
+05-24 14:29 INFO     Training network 0
+05-24 14:29 INFO     n_training: 161
+05-24 14:29 INFO     n_test: 157
+05-24 14:29 INFO     Client: 0 Epoch: 0 Loss: 1.054767 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:29 INFO     Client: 0 Epoch: 1 Loss: 0.494328 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:29 INFO     Client: 0 Epoch: 2 Loss: 0.369157 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:29 INFO     Client: 0 Epoch: 3 Loss: 0.303461 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:30 INFO     Client: 0 Epoch: 4 Loss: 0.265683 Loss1: 0.000000 Loss2: 0.000000
+05-24 14:30 INFO      ** Client: 0 Training complete **
+05-24 14:30 INFO     Training network 1 n_training: 10019
+05-24 14:30 INFO     Training network 1
+05-24 14:30 INFO     n_training: 156
+05-24 14:30 INFO     n_test: 157

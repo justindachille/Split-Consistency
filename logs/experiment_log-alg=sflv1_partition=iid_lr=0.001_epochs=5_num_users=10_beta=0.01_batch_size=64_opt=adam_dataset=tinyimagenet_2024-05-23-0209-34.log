@@ -24592,3 +24592,36 @@
 05-24 14:26 INFO     Training network 5
 05-24 14:27 INFO     Client: 5 Epoch: 0 Loss: 1.1937916905257353
 05-24 14:27 INFO     Client: 5 Epoch: 1 Loss: 0.6705885166954842
+05-24 14:27 INFO     Client: 5 Epoch: 2 Loss: 0.5093946846047784
+05-24 14:27 INFO     Client: 5 Epoch: 3 Loss: 0.4243354753703828
+05-24 14:27 INFO     Client: 5 Epoch: 4 Loss: 0.3648494228625753
+05-24 14:27 INFO      ** Client: 5 Training complete **
+05-24 14:27 INFO     Training network 6 n_training: 10000
+05-24 14:27 INFO     Training network 6
+05-24 14:27 INFO     Client: 6 Epoch: 0 Loss: 1.170667822573595
+05-24 14:27 INFO     Client: 6 Epoch: 1 Loss: 0.6709712223642191
+05-24 14:27 INFO     Client: 6 Epoch: 2 Loss: 0.5095289726356033
+05-24 14:28 INFO     Client: 6 Epoch: 3 Loss: 0.43502857683190876
+05-24 14:28 INFO     Client: 6 Epoch: 4 Loss: 0.37759182597421537
+05-24 14:28 INFO      ** Client: 6 Training complete **
+05-24 14:28 INFO     Training network 7 n_training: 10000
+05-24 14:28 INFO     Training network 7
+05-24 14:28 INFO     Client: 7 Epoch: 0 Loss: 1.1573248889036238
+05-24 14:28 INFO     Client: 7 Epoch: 1 Loss: 0.6648305117324659
+05-24 14:28 INFO     Client: 7 Epoch: 2 Loss: 0.5070841086518233
+05-24 14:28 INFO     Client: 7 Epoch: 3 Loss: 0.4186205974999507
+05-24 14:28 INFO     Client: 7 Epoch: 4 Loss: 0.35909522709193503
+05-24 14:28 INFO      ** Client: 7 Training complete **
+05-24 14:28 INFO     Training network 8 n_training: 10000
+05-24 14:28 INFO     Training network 8
+05-24 14:29 INFO     Client: 8 Epoch: 0 Loss: 1.1586401994061317
+05-24 14:29 INFO     Client: 8 Epoch: 1 Loss: 0.6602639438240392
+05-24 14:29 INFO     Client: 8 Epoch: 2 Loss: 0.5065854345537295
+05-24 14:29 INFO     Client: 8 Epoch: 3 Loss: 0.4339896283901421
+05-24 14:29 INFO     Client: 8 Epoch: 4 Loss: 0.376323530628423
+05-24 14:29 INFO      ** Client: 8 Training complete **
+05-24 14:29 INFO     Training network 9 n_training: 10000
+05-24 14:29 INFO     Training network 9
+05-24 14:29 INFO     Client: 9 Epoch: 0 Loss: 1.1813637724347934
+05-24 14:29 INFO     Client: 9 Epoch: 1 Loss: 0.6553193469336078
+05-24 14:30 INFO     Client: 9 Epoch: 2 Loss: 0.5057949374435814

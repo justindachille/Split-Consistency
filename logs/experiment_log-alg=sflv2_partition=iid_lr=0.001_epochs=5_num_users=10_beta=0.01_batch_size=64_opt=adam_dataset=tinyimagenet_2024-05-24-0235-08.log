@@ -9339,3 +9339,37 @@
 05-24 14:27 INFO     Training network 9
 05-24 14:27 INFO     n_training: 157
 05-24 14:27 INFO     Client: 9 Epoch: 0 Loss: 0.08958340641467055
+05-24 14:27 INFO     Client: 9 Epoch: 1 Loss: 0.05326647255688336
+05-24 14:27 INFO     Client: 9 Epoch: 2 Loss: 0.04625715206193316
+05-24 14:27 INFO     Client: 9 Epoch: 3 Loss: 0.03565787416912473
+05-24 14:27 INFO     Client: 9 Epoch: 4 Loss: 0.027522931596157468
+05-24 14:27 INFO      ** Client: 9 Training complete **
+05-24 14:27 INFO     global n_training: 1563
+05-24 14:27 INFO     global n_test: 157
+05-24 14:28 INFO     >> Global Model Train accuracy: 0.9906, Train accuracy top-5: 0.9998
+05-24 14:28 INFO     >> Global Model Test accuracy: 0.4488, Test accuracy top-5: 0.6676
+05-24 14:28 INFO     >> Global Model Train loss: 0.0516
+05-24 14:28 INFO     in comm round:97
+05-24 14:28 INFO     Training network 0 n_training: 10000
+05-24 14:28 INFO     Training network 0
+05-24 14:28 INFO     n_training: 157
+05-24 14:28 INFO     Client: 0 Epoch: 0 Loss: 0.10418544210208829
+05-24 14:28 INFO     Client: 0 Epoch: 1 Loss: 0.059161792687217524
+05-24 14:28 INFO     Client: 0 Epoch: 2 Loss: 0.03650067251911209
+05-24 14:28 INFO     Client: 0 Epoch: 3 Loss: 0.030835737492058687
+05-24 14:29 INFO     Client: 0 Epoch: 4 Loss: 0.02367713829727879
+05-24 14:29 INFO      ** Client: 0 Training complete **
+05-24 14:29 INFO     Training network 1 n_training: 10000
+05-24 14:29 INFO     Training network 1
+05-24 14:29 INFO     n_training: 157
+05-24 14:29 INFO     Client: 1 Epoch: 0 Loss: 0.09494254689450098
+05-24 14:29 INFO     Client: 1 Epoch: 1 Loss: 0.06093264848681962
+05-24 14:29 INFO     Client: 1 Epoch: 2 Loss: 0.037861939988271066
+05-24 14:29 INFO     Client: 1 Epoch: 3 Loss: 0.026281698784868048
+05-24 14:29 INFO     Client: 1 Epoch: 4 Loss: 0.02100188556204366
+05-24 14:29 INFO      ** Client: 1 Training complete **
+05-24 14:29 INFO     Training network 2 n_training: 10000
+05-24 14:29 INFO     Training network 2
+05-24 14:29 INFO     n_training: 157
+05-24 14:29 INFO     Client: 2 Epoch: 0 Loss: 0.08577666031849232
+05-24 14:30 INFO     Client: 2 Epoch: 1 Loss: 0.05317330307024679

@@ -211,3 +211,36 @@
 05-24 14:26 INFO     n_training: 157
 05-24 14:27 INFO     Client: 8 Epoch: 0 Loss: 4.758503844024269
 05-24 14:27 INFO     Client: 8 Epoch: 1 Loss: 4.404327424468508
+05-24 14:27 INFO     Client: 8 Epoch: 2 Loss: 4.283602392597563
+05-24 14:27 INFO     Client: 8 Epoch: 3 Loss: 4.204450402290198
+05-24 14:27 INFO     Client: 8 Epoch: 4 Loss: 4.13889334156255
+05-24 14:27 INFO      ** Client: 8 Training complete **
+05-24 14:27 INFO     Training network 9 n_training: 10000
+05-24 14:27 INFO     Training network 9
+05-24 14:27 INFO     n_training: 157
+05-24 14:27 INFO     Client: 9 Epoch: 0 Loss: 4.720552921295166
+05-24 14:27 INFO     Client: 9 Epoch: 1 Loss: 4.406638900185846
+05-24 14:28 INFO     Client: 9 Epoch: 2 Loss: 4.262730695639446
+05-24 14:28 INFO     Client: 9 Epoch: 3 Loss: 4.203822473052201
+05-24 14:28 INFO     Client: 9 Epoch: 4 Loss: 4.134281313343412
+05-24 14:28 INFO      ** Client: 9 Training complete **
+05-24 14:28 INFO     global n_training: 1563
+05-24 14:28 INFO     global n_test: 157
+05-24 14:29 INFO     >> Global Model Train accuracy: 0.0055, Train accuracy top-5: 0.0349
+05-24 14:29 INFO     >> Global Model Test accuracy: 0.0059, Test accuracy top-5: 0.0360
+05-24 14:29 INFO     >> Global Model Train loss: 5.5260
+05-24 14:29 INFO     in comm round:2
+05-24 14:29 INFO     Training network 0 n_training: 10000
+05-24 14:29 INFO     Training network 0
+05-24 14:29 INFO     n_training: 157
+05-24 14:29 INFO     Client: 0 Epoch: 0 Loss: 4.320704443439556
+05-24 14:29 INFO     Client: 0 Epoch: 1 Loss: 4.142720220954555
+05-24 14:29 INFO     Client: 0 Epoch: 2 Loss: 4.077020213862133
+05-24 14:29 INFO     Client: 0 Epoch: 3 Loss: 4.022960053887337
+05-24 14:29 INFO     Client: 0 Epoch: 4 Loss: 3.9817428558495394
+05-24 14:29 INFO      ** Client: 0 Training complete **
+05-24 14:29 INFO     Training network 1 n_training: 10000
+05-24 14:29 INFO     Training network 1
+05-24 14:29 INFO     n_training: 157
+05-24 14:29 INFO     Client: 1 Epoch: 0 Loss: 4.3193670321422015
+05-24 14:29 INFO     Client: 1 Epoch: 1 Loss: 4.15775053668174

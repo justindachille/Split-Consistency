@@ -22582,3 +22582,20 @@
 05-24 14:26 INFO     Training network 1
 05-24 14:26 INFO     Client: 1 Epoch: 0 Loss: 0.820138933523646
 05-24 14:27 INFO     Client: 1 Epoch: 1 Loss: 0.3728819909335682
+05-24 14:27 INFO     Client: 1 Epoch: 2 Loss: 0.2722886765153153
+05-24 14:27 INFO     Client: 1 Epoch: 3 Loss: 0.23912437494445896
+05-24 14:27 INFO     Client: 1 Epoch: 4 Loss: 0.20488907195299677
+05-24 14:27 INFO      ** Client: 1 Training complete **
+05-24 14:27 INFO     Training network 2 n_training: 10118
+05-24 14:27 INFO     Training network 2
+05-24 14:28 INFO     Client: 2 Epoch: 0 Loss: 0.8394767387381082
+05-24 14:28 INFO     Client: 2 Epoch: 1 Loss: 0.3361709343293045
+05-24 14:28 INFO     Client: 2 Epoch: 2 Loss: 0.2594724857260155
+05-24 14:28 INFO     Client: 2 Epoch: 3 Loss: 0.21942131093974354
+05-24 14:29 INFO     Client: 2 Epoch: 4 Loss: 0.20770111939386476
+05-24 14:29 INFO      ** Client: 2 Training complete **
+05-24 14:29 INFO     Training network 3 n_training: 10180
+05-24 14:29 INFO     Training network 3
+05-24 14:29 INFO     Client: 3 Epoch: 0 Loss: 1.0725237873365294
+05-24 14:29 INFO     Client: 3 Epoch: 1 Loss: 0.5598014300724246
+05-24 14:29 INFO     Client: 3 Epoch: 2 Loss: 0.43386868663928796
