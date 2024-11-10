@@ -85,8 +85,8 @@ def print_latex_table(stats_df, partition):
     print("\\centering")
     print(f"\\caption{{Training results for data:{partition}, dataset: {args.dataset_filter}}}")
     print("\\begin{adjustbox}{max width=\\textwidth}")
-    print("\\begin{tabular}{|l|c|c|c|c|c|c|} \\hline")
-    headers = "Algorithm & $L_c$ & LR & Batch Size & Optimizer & Global Test Acc. & Runs \\\\ \\hline"
+    print("\\begin{tabular}{|l|c|c|c|c|c|c|c|} \\hline")
+    headers = "Algorithm & $L_c$ & LR & Batch Size & Optimizer & Global Test Acc. & Global Test Top-5 Acc. & Runs \\\\ \\hline"
     print(headers)
     for _, row in stats_df.iterrows():
         split_layer = int(row['split_layer'])
@@ -95,8 +95,9 @@ def print_latex_table(stats_df, partition):
         batch_size = int(row['batch_size'])
         optimizer = row['optimizer']
         global_test_acc = f"{row['mean_global_accuracy']:.2f} ± {row['std_global_accuracy']:.2f}"
+        global_test_top5_acc = f"{row['mean_global_top5_accuracy']:.2f} ± {row['std_global_top5_accuracy']:.2f}"
         runs = int(row['runs'])
-        print(f"{algorithm} & {split_layer} & {lr} & {batch_size} & {optimizer} & {global_test_acc} & {runs} \\\\ \\hline")
+        print(f"{algorithm} & {split_layer} & {lr} & {batch_size} & {optimizer} & {global_test_acc} & {global_test_top5_acc} & {runs} \\\\ \\hline")
     print("\\end{tabular}")
     print("\\end{adjustbox}")
     print("\\end{table}")
